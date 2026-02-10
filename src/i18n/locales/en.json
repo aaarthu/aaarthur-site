@@ -1,0 +1,172 @@
+{
+  "nav": {
+    "home": "HOME",
+    "about": "ABOUT",
+    "projects": "PROJECTS",
+    "contact": "CONTACT"
+  },
+  "header": {
+    "logo": "AAAAAAAAAAAAAAARTHUR DESIGN"
+  },
+  "home": {
+    "designerMarquee": "designer designer designer designer designer designer designer designer designer",
+    "slogan": "JUST GIMME A SHOUT",
+    "manifestoTitle": "I help brands organize ideas and build visual languages with purpose.",
+    "aboutTeaser": "The work starts by understanding context, questioning obvious paths, and turning concepts into consistent and long-lasting visual systems.",
+    "aboutCta": "ABOUT ME",
+    "projectsCta": "VIEW PROJECTS",
+    "projectsTitle": "PROJECTS",
+    "seeMoreProjects": "CLICK TO SEE MORE PROJECTS",
+    "moreProjectsCta": "CLICK TO SEE MORE PROJECTS",
+    "descriptionLeft": "I work with visual identity and branding, helping brands structure ideas and build their own language. Every project starts from context and real needs—not ready-made solutions. I create and extend identity systems, art direction, editorial and presentation design, institutional materials, digital assets,",
+    "descriptionRight": "and motion design—always thinking in systems, not isolated pieces. The process begins with conversation. Listening, exchanging, and testing paths is part of the work, especially when ideas are still forming. I favor decisions that sustain the concept over time, rather than quick answers or immediate effects."
+  },
+  "about": {
+    "title": "ABOUT ME",
+    "greeting": "Hi!",
+    "paragraph1": "My name is Arthur and I work with visual identity and branding, helping brands organize ideas and build their own language. I’m not interested in repeating ready-made solutions—every project starts by understanding context and questioning what’s already given. What needs to be said? And what can be said differently?",
+    "paragraph2": "My practice involves creating and unfolding visual identities, art direction, editorial and presentation design, institutional materials, digital pieces, and motion design. But the work doesn’t start from a list—it starts by listening, understanding needs, and giving ideas space to grow. Questioning obvious paths is part of the process, as well as making visual choices that support the concept over time—not just immediate impact. More than arriving fast at an answer, the work is about asking the right questions and finding the best solutions.",
+    "paragraph3": "This way of working is built between education and practice. I hold a degree in Advertising and a Master’s in Communication and Territorialities (UFES), and I’ve worked as an independent designer for over six years, with experience in projects for companies and cultural initiatives.",
+    "cta": "So—how can I help you today?"
+  },
+  "projects": {
+    "title": "PROJECTS",
+    "errorLoading": "Error loading WordPress projects. Showing local projects."
+  },
+  "contact": {
+    "heroTitle": "LET'S WORK TOGETHER",
+    "contactLabel": "Contact",
+    "servicesLabel": "SERVICES PROVIDED",
+
+    "formTitle": "Request a quote",
+    "formSubtitle": "Share what you need and I’ll get back to you with the next steps.",
+
+    "services": {
+      "branding": {
+        "title": "VISUAL IDENTITY & BRANDING",
+        "description": "Creation and management of visual systems that structure, position, and strengthen brands across all touchpoints.",
+        "items": [
+          "Logo creation and redesign",
+          "Complete visual identity development",
+          "Color palette, typography, and graphic elements definition",
+          "Brand guidelines manual",
+          "Brand applications in institutional materials, promotional items, packaging, events, and physical spaces"
+        ]
+      },
+      "marketing": {
+        "title": "COMMUNICATION & MARKETING DESIGN",
+        "description": "Development of graphic pieces aligned with the brand’s communication strategy.",
+        "items": [
+          "Visual materials for campaigns",
+          "Online and offline advertising pieces",
+          "Social media creatives",
+          "Institutional and commercial materials"
+        ]
+      },
+      "editorial": {
+        "title": "EDITORIAL DESIGN & PRINTED MATERIALS",
+        "description": "Visual organization of content focused on clarity, hierarchy, and aesthetic impact.",
+        "items": [
+          "Layout for books, magazines, and catalogs",
+          "Institutional materials",
+          "Folders, flyers, and posters",
+          "Packaging and labels"
+        ]
+      },
+      "presentations": {
+        "title": "PRESENTATION DESIGN",
+        "description": "Creation of clear, professional, and strategic visual presentations for corporate and commercial contexts.",
+        "items": [
+          "Institutional and commercial presentations",
+          "Pitch decks and proposals",
+          "Custom templates",
+          "Visual standardization"
+        ]
+      },
+      "motion": {
+        "title": "MOTION DESIGN & VISUAL CONTENT",
+        "description": "Animated graphic elements to amplify communication impact.",
+        "items": [
+          "Institutional animations",
+          "Social media motion graphics",
+          "Logo animations",
+          "Explainer and promotional videos"
+        ]
+      },
+      "artDirection": {
+        "title": "ART DIRECTION",
+        "description": "Defining and guiding the visual language of brands, campaigns, and projects.",
+        "items": [
+          "Visual concept development",
+          "Moodboards and references",
+          "Art direction for brands and campaigns"
+        ]
+      }
+    },
+    "form": {
+      "name": "Name",
+      "email": "Email",
+      "company": "Company",
+      "websiteOrSocial": "Website or social media",
+      "businessType": "What type of business?",
+      "businessTypePlaceholder": "E.g.: architecture studio, cosmetics e-commerce, restaurant...",
+      "needs": "What do you need?",
+      "hasBrand": "Do you already have a brand?",
+      "timeline": "Estimated timeline",
+      "timelineDate": "Estimated date",
+      "budget": "Estimated budget",
+      "extraInfo": "Anything else?",
+      "optional": "optional",
+      "required": "*",
+      "submit": "Send form",
+      "submitting": "Sending...",
+      "needOptions": {
+        "visualIdentity": "Visual identity",
+        "graphicMaterials": "Graphic or digital materials",
+        "presentations": "Presentation design",
+        "artDirection": "Art direction",
+        "motion": "Animations / Motion Design",
+        "other": "Other"
+      },
+      "hasBrandOptions": {
+        "yes": "Yes",
+        "no": "No"
+      },
+      "timelineOptions": {
+        "specificDate": "Specific date",
+        "flexible": "Flexible",
+        "notDefined": "Not yet defined"
+      },
+      "budgetOptions": {
+        "range1": "$400 to $1,000",
+        "range2": "$1,000 to $1,800",
+        "range3": "$1,800+",
+        "other": "Other"
+      },
+      "errors": {
+        "name": "Please enter your name.",
+        "email": "Please enter your email.",
+        "emailInvalid": "Invalid email address.",
+        "businessType": "Describe your business type.",
+        "needs": "Select at least one option.",
+        "needsOther": "Please specify what you need.",
+        "hasBrand": "Select an option.",
+        "timeline": "Select an option.",
+        "timelineDate": "Pick a date.",
+        "budget": "Select a budget range.",
+        "budgetOther": "Please specify the budget."
+      },
+      "success": {
+        "title": "Form successfully sent! ✨",
+        "message": "Thanks for reaching out! I received your info and I’ll get back to you soon with next steps.",
+        "sendAnother": "Send another form"
+      }
+    }
+  },
+  "cta": {
+    "getInTouch": "GET IN TOUCH"
+  },
+  "footer": {
+    "email": "ARTHURGOMESDECASTRO@GMAIL.COM"
+  }
+}

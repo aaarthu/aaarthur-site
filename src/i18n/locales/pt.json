@@ -1,0 +1,172 @@
+{
+  "nav": {
+    "home": "INÍCIO",
+    "about": "SOBRE",
+    "projects": "PROJETOS",
+    "contact": "CONTATO"
+  },
+  "header": {
+    "logo": "AAAAAAAAAAAAAAARTHUR DESIGN"
+  },
+  "home": {
+    "designerMarquee": "designer designer designer designer designer designer designer designer designer",
+    "slogan": "QUALQUER COISA GRITA",
+    "manifestoTitle": "Ajudo marcas a organizar ideias e construir linguagens visuais com propósito.",
+    "aboutTeaser": "O trabalho começa entendendo contexto, questionando caminhos óbvios e transformando conceitos em sistemas visuais consistentes e duradouros.",
+    "aboutCta": "VER SOBRE MIM",
+    "projectsCta": "VER PROJETOS",
+    "projectsTitle": "PROJETOS",
+    "seeMoreProjects": "CLIQUE PARA VER MAIS PROJETOS",
+    "moreProjectsCta": "CLIQUE PARA VER MAIS PROJETOS",
+    "descriptionLeft": "Trabalho com identidade visual e branding, ajudando marcas a estruturar ideias e construir linguagens próprias. Cada projeto parte do contexto e da necessidade real, não de soluções prontas. Desenvolvo e desdobro identidades visuais, direção de arte, design editorial e de apresentações, materiais institucionais, peças digitais",
+    "descriptionRight": "e motion design, sempre pensando o conjunto — não peças isoladas. O processo começa na conversa. Ouvir, trocar e testar caminhos faz parte do trabalho, inclusive quando as ideias ainda estão em formação. Prefiro decisões que sustentem o conceito no tempo a respostas rápidas ou efeitos imediatos."
+  },
+  "about": {
+    "title": "SOBRE MIM",
+    "greeting": "Olá!",
+    "paragraph1": "Me chamo Arthur e trabalho com identidade visual e branding, ajudando marcas a organizar ideias e construir linguagens próprias. Não me interessa repetir soluções prontas, cada projeto começa entendendo o contexto e questionando o que já está dado. O que precisa ser dito? E o que pode ser dito de outro jeito?",
+    "paragraph2": "Minha atuação envolve a criação e o desdobramento de identidades visuais, direção de arte, design editorial e de apresentações, materiais institucionais, peças digitais e motion design. Mas o trabalho não começa nessa lista e sim em te ouvir, entender suas necessidades e dar espaço pras ideias crescerem. Questionar caminhos óbvios faz parte do processo, assim como fazer escolhas visuais que sustentem o conceito no tempo, e não apenas o impacto imediato. Mais do que chegar rápido a uma resposta, o trabalho está em fazer as perguntas certas e encontrar as melhores soluções.",
+    "paragraph3": "Essa forma de trabalhar se constrói entre formação e prática. Sou formado em Publicidade e Propaganda e mestre em Comunicação e Territorialidades pela Universidade Federal do Espírito Santo, e atuo como designer autônomo há mais de seis anos, com experiência em projetos para empresas e iniciativas culturais.",
+    "cta": "E aí? Como posso te ajudar hoje?"
+  },
+  "projects": {
+    "title": "PROJETOS",
+    "errorLoading": "Erro ao carregar projetos do WordPress. Mostrando projetos locais."
+  },
+  "contact": {
+    "heroTitle": "BORA TRABALHAR JUNTOS",
+    "contactLabel": "Contato",
+    "servicesLabel": "SERVIÇOS PRESTADOS",
+
+    "formTitle": "Peça um orçamento",
+    "formSubtitle": "Conte rapidinho o que você precisa e eu retorno com os próximos passos.",
+
+    "services": {
+      "branding": {
+        "title": "IDENTIDADE VISUAL & BRANDING",
+        "description": "Criação e gestão de sistemas visuais que estruturam, posicionam e fortalecem marcas em todos os seus pontos de contato.",
+        "items": [
+          "Criação e redesign de logotipos",
+          "Desenvolvimento de identidade visual completa",
+          "Definição de paleta cromática, tipografia e grafismos",
+          "Manual de identidade visual",
+          "Aplicações da marca em materiais institucionais, promocionais, embalagens, eventos e espaços físicos"
+        ]
+      },
+      "marketing": {
+        "title": "DESIGN PARA COMUNICAÇÃO & MARKETING",
+        "description": "Desenvolvimento de peças gráficas alinhadas à estratégia de comunicação da marca.",
+        "items": [
+          "Materiais visuais para campanhas",
+          "Peças publicitárias online e offline",
+          "Criativos para redes sociais",
+          "Materiais institucionais e comerciais"
+        ]
+      },
+      "editorial": {
+        "title": "DESIGN EDITORIAL & MATERIAIS IMPRESSOS",
+        "description": "Organização visual de conteúdo com foco em clareza, hierarquia e impacto estético.",
+        "items": [
+          "Diagramação de livros, revistas e catálogos",
+          "Materiais institucionais",
+          "Folders, flyers e cartazes",
+          "Embalagens e rótulos"
+        ]
+      },
+      "presentations": {
+        "title": "DESIGN DE APRESENTAÇÕES",
+        "description": "Criação de apresentações visuais claras, profissionais e estratégicas para contextos corporativos e comerciais.",
+        "items": [
+          "Apresentações institucionais e comerciais",
+          "Pitch decks e propostas",
+          "Templates personalizados",
+          "Padronização visual"
+        ]
+      },
+      "motion": {
+        "title": "MOTION DESIGN & CONTEÚDO VISUAL",
+        "description": "Elementos gráficos animados para ampliar o impacto da comunicação.",
+        "items": [
+          "Animações institucionais",
+          "Motion para redes sociais",
+          "Animação de logotipos",
+          "Vídeos explicativos e promocionais"
+        ]
+      },
+      "artDirection": {
+        "title": "DIREÇÃO DE ARTE",
+        "description": "Definição e condução da linguagem visual de marcas, campanhas e projetos.",
+        "items": [
+          "Conceituação visual",
+          "Moodboards e referências",
+          "Direção de arte para marcas e campanhas"
+        ]
+      }
+    },
+    "form": {
+      "name": "Nome",
+      "email": "E-mail",
+      "company": "Empresa",
+      "websiteOrSocial": "Site ou rede social",
+      "businessType": "Qual seu tipo de negócio?",
+      "businessTypePlaceholder": "Ex.: estúdio de arquitetura, e-commerce de cosméticos, restaurante...",
+      "needs": "O que você precisa?",
+      "hasBrand": "Você já tem uma marca?",
+      "timeline": "Prazo estimado",
+      "timelineDate": "Data estimada",
+      "budget": "Investimento estimado",
+      "extraInfo": "Mais alguma informação?",
+      "optional": "opcional",
+      "required": "*",
+      "submit": "Enviar formulário",
+      "submitting": "Enviando...",
+      "needOptions": {
+        "visualIdentity": "Identidade visual",
+        "graphicMaterials": "Materiais gráficos ou digitais",
+        "presentations": "Design de apresentações",
+        "artDirection": "Direção de arte",
+        "motion": "Animações/Motion Design",
+        "other": "Outro"
+      },
+      "hasBrandOptions": {
+        "yes": "Sim",
+        "no": "Não"
+      },
+      "timelineOptions": {
+        "specificDate": "Data específica",
+        "flexible": "Flexível",
+        "notDefined": "Ainda não definido"
+      },
+      "budgetOptions": {
+        "range1": "De R$2000 a R$5000",
+        "range2": "De R$5000 a R$9000",
+        "range3": "Acima de R$10.000",
+        "other": "Outro"
+      },
+      "errors": {
+        "name": "Informe seu nome.",
+        "email": "Informe seu e-mail.",
+        "emailInvalid": "E-mail inválido.",
+        "businessType": "Descreva o tipo de negócio.",
+        "needs": "Selecione pelo menos uma opção.",
+        "needsOther": "Especifique o que você precisa.",
+        "hasBrand": "Selecione uma opção.",
+        "timeline": "Selecione uma opção.",
+        "timelineDate": "Escolha uma data.",
+        "budget": "Selecione uma faixa de investimento.",
+        "budgetOther": "Especifique o investimento."
+      },
+      "success": {
+        "title": "Formulário enviado com sucesso! ✨",
+        "message": "Obrigada pelo contato! Já recebi suas informações e entro em contato em breve com os próximos passos.",
+        "sendAnother": "Enviar outro formulário"
+      }
+    }
+  },
+  "cta": {
+    "getInTouch": "ENTRE EM CONTATO"
+  },
+  "footer": {
+    "email": "ARTHURGOMESDECASTRO@GMAIL.COM"
+  }
+}

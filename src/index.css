@@ -1,0 +1,308 @@
+/* ============================= */
+/* ZUUME — BOLD + BOLD ITALIC */
+/* ============================= */
+
+@font-face {
+  font-family: "Zuume";
+  src: url("./assets/fonts/Zuume Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Zuume";
+  src: url("./assets/fonts/Zuume Bold Italic.ttf") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* ============================= */
+/* DM SANS — TEXTO */
+/* ============================= */
+
+@font-face {
+  font-family: "DM Sans";
+  src: url("./assets/fonts/DMSans-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DM Sans";
+  src: url("./assets/fonts/DMSans-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ============================= */
+/* TAILWIND */
+/* ============================= */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  EDITORIAL PORTFOLIO DESIGN SYSTEM
+  Inspired by contemporary design studios, poster design, and visual identity work.
+  Bold typography, high contrast, vibrant colors with restraint.
+*/
+
+@layer base {
+  :root {
+    /* Primary - Vibrant Blue (main background) */
+    --primary: 210 70% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Background - The vibrant blue #2374c4 */
+    --background: 210 69% 45%;
+    --foreground: 0 0% 100%;
+
+    /* Surface - Cream/Off-white for cards */
+    --surface: 43 100% 96%;
+    --surface-foreground: 0 0% 10%;
+
+    /* Modal - Deep black */
+    --modal: 0 0% 0%;
+    --modal-foreground: 0 0% 100%;
+
+    /* Accent Red */
+    --accent-red: 4 74% 49%;
+    --accent-red-foreground: 0 0% 100%;
+
+    /* Accent Yellow/Orange */
+    --accent-yellow: 40 100% 50%;
+    --accent-yellow-foreground: 0 0% 10%;
+
+    /* Card */
+    --card: 43 100% 96%;
+    --card-foreground: 0 0% 10%;
+
+    /* Muted */
+    --muted: 217 50% 40%;
+    --muted-foreground: 217 30% 80%;
+
+    /* Secondary */
+    --secondary: 210 70% 45%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Accent */
+    --accent: 40 100% 50%;
+    --accent-foreground: 0 0% 10%;
+
+    /* Popover */
+    --popover: 0 0% 0%;
+    --popover-foreground: 0 0% 100%;
+
+    /* Destructive */
+    --destructive: 4 74% 49%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Border & Input */
+    --border: 217 50% 40%;
+    --input: 217 50% 40%;
+    --ring: 0 0% 100%;
+
+    --radius: 0.75rem;
+
+    /* Sidebar (keeping for compatibility) */
+    --sidebar-background: 217 91% 50%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 217 91% 50%;
+    --sidebar-accent: 217 70% 45%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 217 50% 40%;
+    --sidebar-ring: 0 0% 100%;
+  }
+
+  .dark {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --primary: 217 91% 50%;
+    --primary-foreground: 0 0% 100%;
+    --card: 0 0% 5%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 100%;
+    --secondary: 217 50% 20%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 40 100% 50%;
+    --accent-foreground: 0 0% 10%;
+    --destructive: 4 74% 49%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 217 91% 50%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: "Inter", system-ui, sans-serif;
+  }
+
+  /* Editorial Typography */
+  h1,
+  h2,
+  h3,
+  .font-editorial {
+    font-family: font-zuume;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+}
+
+@layer components {
+  /* Editorial heading styles */
+  .heading-hero {
+    @apply font-zuume italic text-6xl md:text-8xl lg:text-[10rem] leading-none tracking-tight;
+  }
+
+  .heading-section {
+    @apply font-zuume italic text-4xl md:text-6xl lg:text-7xl leading-none tracking-tight;
+  }
+
+  .heading-project {
+    @apply font-zuume italic text-xl md:text-2xl leading-tight tracking-wide;
+  }
+
+  /* Surface styles */
+  .surface-cream {
+    @apply bg-surface text-surface-foreground;
+  }
+
+  .surface-modal {
+    @apply bg-modal text-modal-foreground;
+  }
+
+  /* Card hover effect */
+  .card-editorial {
+    @apply bg-surface rounded-lg transition-transform duration-300 ease-out;
+  }
+
+  .card-editorial:hover {
+    @apply scale-[1.02];
+  }
+
+  /* Link underline animation */
+  .link-editorial {
+    @apply relative inline-block;
+  }
+
+  .link-editorial::after {
+    content: "";
+    @apply absolute bottom-0 left-0 w-full h-0.5 bg-current origin-bottom-right transition-transform duration-300 scale-x-0;
+  }
+
+  .link-editorial:hover::after {
+    @apply origin-bottom-left scale-x-100;
+  }
+
+  /* Marquee animation */
+  .marquee {
+    @apply flex whitespace-nowrap;
+    animation: marquee 20s linear infinite;
+  }
+
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  /* Accent badge */
+  .badge-accent-red {
+    @apply inline-block px-3 py-1 text-sm font-medium rounded;
+    background-color: hsl(var(--accent-red));
+    color: hsl(var(--accent-red-foreground));
+  }
+
+  .badge-accent-yellow {
+    @apply inline-block px-3 py-1 text-sm font-medium rounded;
+    background-color: hsl(var(--accent-yellow));
+    color: hsl(var(--accent-yellow-foreground));
+  }
+
+  /* CTA Block */
+  .cta-block {
+    @apply relative overflow-hidden rounded-2xl px-8 py-12;
+    background-color: hsl(var(--accent-yellow));
+    color: hsl(var(--accent-yellow-foreground));
+  }
+
+  .cta-block .heading-section {
+    color: hsl(var(--accent-red));
+  }
+}
+
+@layer utilities {
+  /* Editorial fade in */
+  .animate-fade-up {
+    animation: fadeUp 0.6s ease-out forwards;
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-slide-in {
+    animation: slideIn 0.4s ease-out forwards;
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Stagger children */
+  .stagger-children > * {
+    opacity: 0;
+    animation: fadeUp 0.5s ease-out forwards;
+  }
+
+  .stagger-children > *:nth-child(1) {
+    animation-delay: 0.1s;
+  }
+  .stagger-children > *:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  .stagger-children > *:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+  .stagger-children > *:nth-child(4) {
+    animation-delay: 0.4s;
+  }
+  .stagger-children > *:nth-child(5) {
+    animation-delay: 0.5s;
+  }
+  .stagger-children > *:nth-child(6) {
+    animation-delay: 0.6s;
+  }
+}
