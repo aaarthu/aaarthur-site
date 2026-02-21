@@ -49,7 +49,7 @@ export function ProjectCard({ project, onClick, index }: ProjectCardProps) {
           {project.title}
         </h3>
 
-        <p className="font-editorial text-sm tracking-wider opacity-60">
+        <p className="font-dmsans text-sm tracking-wider opacity-60">
           {displayCategory}
         </p>
       </div>
