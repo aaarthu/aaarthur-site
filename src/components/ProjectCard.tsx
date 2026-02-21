@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Project } from "@/data/projects";
+import { useTranslatedCategory } from "@/hooks/useTranslatedCategory";
 
 interface ProjectCardProps {
   project: Project;
@@ -8,6 +9,8 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, onClick, index }: ProjectCardProps) {
+  const translateCategory = useTranslatedCategory();
+
   return (
     <motion.article
       initial={{ opacity: 0, y: 30 }}
@@ -17,7 +20,7 @@ export function ProjectCard({ project, onClick, index }: ProjectCardProps) {
       onClick={onClick}
       className="group cursor-pointer h-full flex flex-col"
     >
-      {/* Thumbnail ALTURA AJUSTADA */}
+      {/* Thumbnail */}
       <div
         className="
           card-editorial
@@ -41,7 +44,7 @@ export function ProjectCard({ project, onClick, index }: ProjectCardProps) {
         </h3>
 
         <p className="font-editorial text-sm tracking-wider opacity-60">
-          {project.category}
+          {translateCategory(project.category)}
         </p>
       </div>
     </motion.article>

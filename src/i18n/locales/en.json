@@ -37,10 +37,8 @@
     "heroTitle": "LET'S WORK TOGETHER",
     "contactLabel": "Contact",
     "servicesLabel": "SERVICES PROVIDED",
-
     "formTitle": "Request a quote",
     "formSubtitle": "Share what you need and I’ll get back to you with the next steps.",
-
     "services": {
       "branding": {
         "title": "VISUAL IDENTITY & BRANDING",
@@ -168,5 +166,15 @@
   },
   "footer": {
     "email": "ARTHURGOMESDECASTRO@GMAIL.COM"
+  },
+  "categories": {
+    "identidadeVisual": "VISUAL IDENTITY",
+    "branding": "BRANDING",
+    "directionDeArte": "ART DIRECTION",
+    "editorial": "EDITORIAL",
+    "motion": "MOTION DESIGN",
+    "apresentacoes": "PRESENTATIONS",
+    "comunicacao": "COMMUNICATION",
+    "projeto": "PROJECT"
   }
 }

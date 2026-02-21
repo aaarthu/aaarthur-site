@@ -37,10 +37,8 @@
     "heroTitle": "BORA TRABALHAR JUNTOS",
     "contactLabel": "Contato",
     "servicesLabel": "SERVIÇOS PRESTADOS",
-
     "formTitle": "Peça um orçamento",
     "formSubtitle": "Conte rapidinho o que você precisa e eu retorno com os próximos passos.",
-
     "services": {
       "branding": {
         "title": "IDENTIDADE VISUAL & BRANDING",
@@ -168,5 +166,15 @@
   },
   "footer": {
     "email": "ARTHURGOMESDECASTRO@GMAIL.COM"
+  },
+  "categories": {
+    "identidadeVisual": "IDENTIDADE VISUAL",
+    "branding": "BRANDING",
+    "directionDeArte": "DIREÇÃO DE ARTE",
+    "editorial": "EDITORIAL",
+    "motion": "MOTION DESIGN",
+    "apresentacoes": "APRESENTAÇÕES",
+    "comunicacao": "COMUNICAÇÃO",
+    "projeto": "PROJETO"
   }
 }
