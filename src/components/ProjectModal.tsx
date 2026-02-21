@@ -24,7 +24,7 @@ function isValidImageUrl(url: string) {
 }
 
 export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isEn = i18n.language?.startsWith("en");
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -63,10 +63,13 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
 
   if (!project) return null;
 
-  // Descrição no idioma correto
   const displayDescription = isEn
     ? (project.description_en || project.description)
     : (project.description_pt || project.description);
+
+  const displayCategory = isEn
+    ? (project.category_en || project.category)
+    : (project.category_pt || project.category);
 
   const openLightbox = (index: number) => {
     setSelectedImageIndex(index);
@@ -100,7 +103,7 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
                     className="flex items-center gap-2 font-dmsans text-xs tracking-[0.18em] uppercase text-black/70 hover:text-black transition-colors"
                   >
                     <ChevronLeft className="w-5 h-5" />
-                    Voltar
+                    {t("modal.back")}
                   </button>
                   <div className="flex-1 text-center">
                     <div className="font-dmsans text-[11px] tracking-[0.22em] uppercase text-black/60 truncate">
@@ -135,7 +138,13 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
                       {project.title}
                     </h1>
 
-                    <p className="mt-7 font-dmsans text-base leading-[1.9] text-black/80">
+                    {displayCategory && (
+                      <p className="mt-3 font-dmsans text-sm tracking-wider opacity-50 uppercase">
+                        {displayCategory}
+                      </p>
+                    )}
+
+                    <p className="mt-6 font-dmsans text-base leading-[1.9] text-black/80">
                       {displayDescription}
                     </p>
 
@@ -146,19 +155,25 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                           {project.details?.year && (
                             <div>
-                              <div className="font-dmsans text-[11px] uppercase tracking-[0.2em] text-black/45">Ano</div>
+                              <div className="font-dmsans text-[11px] uppercase tracking-[0.2em] text-black/45">
+                                {t("modal.year")}
+                              </div>
                               <div className="mt-2 text-lg text-black/85">{project.details.year}</div>
                             </div>
                           )}
                           {project.details?.client && (
                             <div>
-                              <div className="font-dmsans text-[11px] uppercase tracking-[0.2em] text-black/45">Cliente</div>
+                              <div className="font-dmsans text-[11px] uppercase tracking-[0.2em] text-black/45">
+                                {t("modal.client")}
+                              </div>
                               <div className="mt-2 text-lg text-black/85">{project.details.client}</div>
                             </div>
                           )}
                           {project.details?.role && (
                             <div>
-                              <div className="font-dmsans text-[11px] uppercase tracking-[0.2em] text-black/45">Função</div>
+                              <div className="font-dmsans text-[11px] uppercase tracking-[0.2em] text-black/45">
+                                {t("modal.role")}
+                              </div>
                               <div className="mt-2 text-lg text-black/85">{project.details.role}</div>
                             </div>
                           )}
@@ -170,7 +185,7 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
                     <div className="mt-10 space-y-5">
                       {allImages.length === 0 ? (
                         <div className="rounded-2xl border border-black/10 bg-black/[0.03] p-6">
-                          Nenhuma imagem disponível.
+                          {t("modal.noImages")}
                         </div>
                       ) : (
                         allImages.map((img, idx) => (

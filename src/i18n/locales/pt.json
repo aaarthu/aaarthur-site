@@ -176,5 +176,12 @@
     "apresentacoes": "APRESENTAÇÕES",
     "comunicacao": "COMUNICAÇÃO",
     "projeto": "PROJETO"
+  },
+  "modal": {
+    "back": "Voltar",
+    "year": "Ano",
+    "client": "Cliente",
+    "role": "Função",
+    "noImages": "Nenhuma imagem disponível."
   }
 }
