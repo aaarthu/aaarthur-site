@@ -83,3 +83,29 @@ add_filter('script_loader_tag', function ($tag, $handle, $src) {
   }
   return $tag;
 }, 10, 3);
+
+// ============================================================
+// Expõe campos customizados do tipo "projeto" na API REST
+// ============================================================
+add_action('rest_api_init', function () {
+  $fields = [
+    'category_pt',
+    'category_en',
+    'description_pt',
+    'description_en',
+    'client_pt',
+    'client_en',
+    'role_pt',
+    'role_en',
+    'year',
+  ];
+
+  foreach ($fields as $field) {
+    register_rest_field('projeto', $field, [
+      'get_callback' => function ($post) use ($field) {
+        return get_post_meta($post['id'], $field, true) ?: '';
+      },
+      'schema' => ['type' => 'string'],
+    ]);
+  }
+});

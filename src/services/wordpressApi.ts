@@ -7,6 +7,10 @@ export interface WordPressProject {
   excerpt?: { rendered: string };
   content?: { rendered: string };
   meta?: Record<string, any>;
+  category_pt?: string;
+  category_en?: string;
+  description_pt?: string;
+  description_en?: string;
   acf?: Record<string, any>;
   _embedded?: {
     "wp:featuredmedia"?: Array<any>;
@@ -98,6 +102,9 @@ function featuredFromEmbedded(wp: WordPressProject): string {
 
 // Lê um campo customizado tentando meta, acf e _embedded
 function getCustomField(wp: WordPressProject, fieldName: string): string {
+  // Tenta direto na raiz (register_rest_field), depois meta e acf
+  const root = (wp as any)[fieldName];
+  if (root) return root;
   return (
     wp.meta?.[fieldName] ||
     wp.acf?.[fieldName] ||
