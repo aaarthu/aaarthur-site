@@ -19,6 +19,8 @@ export interface Project {
   slug?: string; 
   title: string;
   category: string;
+  category_pt?: string;
+  category_en?: string;
   description: string;
   thumbnail: string;
   images: string[];

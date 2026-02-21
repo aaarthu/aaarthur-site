@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Project } from "@/data/projects";
-import { useTranslatedCategory } from "@/hooks/useTranslatedCategory";
+import { useTranslation } from "react-i18next";
 
 interface ProjectCardProps {
   project: Project;
@@ -9,7 +9,13 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, onClick, index }: ProjectCardProps) {
-  const translateCategory = useTranslatedCategory();
+  const { i18n } = useTranslation();
+  const isEn = i18n.language?.startsWith("en");
+
+  // Usa category_pt / category_en se disponível, senão cai no category genérico
+  const displayCategory = isEn
+    ? (project.category_en || project.category)
+    : (project.category_pt || project.category);
 
   return (
     <motion.article
@@ -44,7 +50,7 @@ export function ProjectCard({ project, onClick, index }: ProjectCardProps) {
         </h3>
 
         <p className="font-editorial text-sm tracking-wider opacity-60">
-          {translateCategory(project.category)}
+          {displayCategory}
         </p>
       </div>
     </motion.article>
