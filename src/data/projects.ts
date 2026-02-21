@@ -22,6 +22,8 @@ export interface Project {
   category_pt?: string;
   category_en?: string;
   description: string;
+  description_pt?: string;
+  description_en?: string;
   thumbnail: string;
   images: string[];
   details?: {

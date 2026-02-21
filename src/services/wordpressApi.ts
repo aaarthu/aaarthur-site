@@ -27,6 +27,8 @@ export interface TransformedProject {
   category_pt: string;
   category_en: string;
   description: string;
+  description_pt: string;
+  description_en: string;
   thumbnail: string;
   images: string[];
   details?: {
@@ -183,6 +185,15 @@ function transformProject(wp: WordPressProject): TransformedProject {
     getCustomField(wp, "category_en") ||
     category_pt; // fallback: mostra o PT se EN não tiver preenchido
 
+  const description_pt =
+    getCustomField(wp, "description_pt") ||
+    stripHtml(wp.excerpt?.rendered || "") ||
+    stripHtml(contentHtml).slice(0, 800);
+
+  const description_en =
+    getCustomField(wp, "description_en") ||
+    description_pt;
+
   const description =
     stripHtml(wp.excerpt?.rendered || "") || stripHtml(contentHtml).slice(0, 220);
 
@@ -198,6 +209,8 @@ function transformProject(wp: WordPressProject): TransformedProject {
     category_pt: category_pt.toUpperCase(),
     category_en: category_en.toUpperCase(),
     description,
+    description_pt,
+    description_en,
     thumbnail,
     images,
     details: undefined,

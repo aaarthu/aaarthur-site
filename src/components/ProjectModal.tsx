@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft } from "lucide-react";
 import { Project } from "@/data/projects";
 import { ImageLightbox } from "./ImageLightbox";
+import { useTranslation } from "react-i18next";
 
 interface ProjectModalProps {
   project: Project | null;
@@ -23,26 +24,22 @@ function isValidImageUrl(url: string) {
 }
 
 export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
+  const { i18n } = useTranslation();
+  const isEn = i18n.language?.startsWith("en");
+
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
-  /* Lock scroll */
   useEffect(() => {
     if (isOpen) document.body.style.overflow = "hidden";
     else document.body.style.overflow = "";
-
-    return () => {
-      document.body.style.overflow = "";
-    };
+    return () => { document.body.style.overflow = ""; };
   }, [isOpen]);
 
-  /* ESC behaviour */
   useEffect(() => {
     if (!isOpen) return;
-
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
-
       if (lightboxOpen) {
         e.preventDefault();
         e.stopPropagation();
@@ -50,27 +47,26 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
         setLightboxOpen(false);
         return;
       }
-
       onClose();
     };
-
     window.addEventListener("keydown", onKeyDown, { capture: true });
-
-    return () =>
-      window.removeEventListener("keydown", onKeyDown, { capture: true });
+    return () => window.removeEventListener("keydown", onKeyDown, { capture: true });
   }, [isOpen, onClose, lightboxOpen]);
 
   const allImages = useMemo(() => {
     if (!project) return [];
-
     const imgs = [project.thumbnail, ...(project.images || [])]
       .filter(Boolean)
       .filter(isValidImageUrl);
-
     return Array.from(new Set(imgs));
   }, [project]);
 
   if (!project) return null;
+
+  // Descrição no idioma correto
+  const displayDescription = isEn
+    ? (project.description_en || project.description)
+    : (project.description_pt || project.description);
 
   const openLightbox = (index: number) => {
     setSelectedImageIndex(index);
@@ -106,13 +102,11 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
                     <ChevronLeft className="w-5 h-5" />
                     Voltar
                   </button>
-
                   <div className="flex-1 text-center">
                     <div className="font-dmsans text-[11px] tracking-[0.22em] uppercase text-black/60 truncate">
                       {project.title}
                     </div>
                   </div>
-
                   <button
                     onClick={onClose}
                     className="p-2 rounded-full hover:bg-black/5 transition-colors"
@@ -135,8 +129,6 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
                 className="mx-auto w-full max-w-6xl rounded-3xl bg-white text-black shadow-2xl border border-black/10 overflow-hidden"
               >
                 <div className="px-5 md:px-8 pt-8 md:pt-10 pb-8 md:pb-10">
-
-                  {/* TEXTO + IMAGENS COMPARTILHAM CONTAINER */}
                   <div className="max-w-4xl mx-auto text-left">
 
                     <h1 className="block w-full font-zuume italic text-5xl md:text-6xl leading-[0.95]">
@@ -144,7 +136,7 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
                     </h1>
 
                     <p className="mt-7 font-dmsans text-base leading-[1.9] text-black/80">
-                      {project.description}
+                      {displayDescription}
                     </p>
 
                     {(project.details?.year ||
@@ -152,40 +144,24 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
                       project.details?.role) && (
                       <div className="mt-9 pt-7 border-t border-black/10">
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-
                           {project.details?.year && (
                             <div>
-                              <div className="font-dmsans text-[11px] uppercase tracking-[0.2em] text-black/45">
-                                Ano
-                              </div>
-                              <div className="mt-2 text-lg text-black/85">
-                                {project.details.year}
-                              </div>
+                              <div className="font-dmsans text-[11px] uppercase tracking-[0.2em] text-black/45">Ano</div>
+                              <div className="mt-2 text-lg text-black/85">{project.details.year}</div>
                             </div>
                           )}
-
                           {project.details?.client && (
                             <div>
-                              <div className="font-dmsans text-[11px] uppercase tracking-[0.2em] text-black/45">
-                                Cliente
-                              </div>
-                              <div className="mt-2 text-lg text-black/85">
-                                {project.details.client}
-                              </div>
+                              <div className="font-dmsans text-[11px] uppercase tracking-[0.2em] text-black/45">Cliente</div>
+                              <div className="mt-2 text-lg text-black/85">{project.details.client}</div>
                             </div>
                           )}
-
                           {project.details?.role && (
                             <div>
-                              <div className="font-dmsans text-[11px] uppercase tracking-[0.2em] text-black/45">
-                                Função
-                              </div>
-                              <div className="mt-2 text-lg text-black/85">
-                                {project.details.role}
-                              </div>
+                              <div className="font-dmsans text-[11px] uppercase tracking-[0.2em] text-black/45">Função</div>
+                              <div className="mt-2 text-lg text-black/85">{project.details.role}</div>
                             </div>
                           )}
-
                         </div>
                       </div>
                     )}
