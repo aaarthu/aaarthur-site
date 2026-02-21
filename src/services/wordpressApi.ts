@@ -50,12 +50,17 @@ function isValidUrl(u: unknown): u is string {
   );
 }
 
-function firstUrlFromSrcSet(srcset: string | null): string {
-  // srcset: "url1 300w, url2 1024w" -> pega o primeiro url
+// Pega a URL com maior resolução do srcset
+function bestUrlFromSrcSet(srcset: string | null): string {
   if (!srcset) return "";
-  const first = srcset.split(",")[0]?.trim();
-  if (!first) return "";
-  return first.split(" ")[0]?.trim() || "";
+  const entries = srcset.split(",").map((entry) => {
+    const parts = entry.trim().split(/\s+/);
+    const url = parts[0] || "";
+    const width = parseInt(parts[1] || "0", 10) || 0;
+    return { url, width };
+  });
+  entries.sort((a, b) => b.width - a.width);
+  return entries[0]?.url || "";
 }
 
 function extractImagesFromContent(html: string = ""): string[] {
@@ -67,28 +72,28 @@ function extractImagesFromContent(html: string = ""): string[] {
   const imgs = Array.from(doc.querySelectorAll("img"));
   const urls = imgs
     .map((img) => {
-      // WP.com / lazyload: pode usar data-src / data-orig-file
+      // Prioridade: arquivo original > large > srcset maior > src normal
       const src =
-        img.getAttribute("src") ||
-        img.getAttribute("data-src") ||
         img.getAttribute("data-orig-file") ||
         img.getAttribute("data-large-file") ||
-        firstUrlFromSrcSet(img.getAttribute("srcset"));
+        bestUrlFromSrcSet(img.getAttribute("srcset")) ||
+        img.getAttribute("data-src") ||
+        img.getAttribute("src");
 
       return src || "";
     })
     .filter(isValidUrl);
 
-  // dedup
   return Array.from(new Set(urls));
 }
 
 function featuredFromEmbedded(wp: WordPressProject): string {
   const fm = wp._embedded?.["wp:featuredmedia"]?.[0];
+  // Prioridade: full > large > source_url > guid
   const url =
-    fm?.source_url ||
     fm?.media_details?.sizes?.full?.source_url ||
     fm?.media_details?.sizes?.large?.source_url ||
+    fm?.source_url ||
     fm?.guid?.rendered ||
     "";
   return isValidUrl(url) ? url : "";
@@ -106,7 +111,6 @@ export async function fetchWordPressProjects(): Promise<TransformedProject[]> {
 
   const data: WordPressProject[] = await res.json();
 
-  // 🔎 Debug útil (não quebra nada). Veja no console UMA vez.
   const first = data?.[0];
   if (first) {
     console.log("WP CHECK:", {
@@ -115,8 +119,7 @@ export async function fetchWordPressProjects(): Promise<TransformedProject[]> {
       hasEmbedded: !!first._embedded,
       featured: featuredFromEmbedded(first),
       contentHasImgTag: (first.content?.rendered || "").includes("<img"),
-      extractedImagesCount: extractImagesFromContent(first.content?.rendered || "")
-        .length,
+      extractedImagesCount: extractImagesFromContent(first.content?.rendered || "").length,
     });
   }
 
@@ -152,7 +155,6 @@ export async function fetchWordPressProjectBySlug(
   );
 
   if (!res.ok) {
-    // WP costuma retornar 200 com array vazio; mas se der erro real, tratamos
     throw new Error(`Failed to fetch project by slug: ${res.statusText}`);
   }
 
@@ -174,10 +176,7 @@ function transformProject(wp: WordPressProject): TransformedProject {
   const description =
     stripHtml(wp.excerpt?.rendered || "") || stripHtml(contentHtml).slice(0, 220);
 
-  // thumbnail: featured, senão primeira imagem do conteúdo
   const thumbnail = featured || contentImages[0] || "";
-
-  // images: conteúdo, e se estiver vazio, usa thumbnail se existir
   const images = contentImages.length ? contentImages : [thumbnail].filter(Boolean);
 
   return {
