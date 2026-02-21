@@ -122,7 +122,7 @@ export function ImageLightbox({
               transition={{ duration: 0.18 }}
               src={current}
               alt={`Imagem ${currentIndex + 1}`}
-              className="w-full h-full object-cover md:object-contain block"
+              className="w-full h-full object-contain block"
               draggable={false}
             />
           </div>

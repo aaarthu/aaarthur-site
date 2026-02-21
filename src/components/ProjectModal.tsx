@@ -211,7 +211,7 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
                                 src={img}
                                 alt={`${project.title} - ${idx + 1}`}
                                 loading={idx === 0 ? "eager" : "lazy"}
-                                className="absolute inset-0 w-full h-full object-cover md:object-contain"
+                                className="absolute inset-0 w-full h-full object-contain"
                               />
                             </div>
                           </motion.button>
