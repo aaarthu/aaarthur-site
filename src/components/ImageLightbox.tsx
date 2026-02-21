@@ -9,6 +9,63 @@ interface ImageLightboxProps {
   onClose: () => void;
 }
 
+// Gera uma URL de preview menor a partir da URL original do WordPress
+function getThumbUrl(url: string): string {
+  // WordPress: troca sufixo de tamanho, ex: image-1920x1080.jpg → image-400x225.jpg
+  const resized = url.replace(/(-\d+x\d+)(\.\w+)$/, "-400x225$2");
+  if (resized !== url) return resized;
+  // Se não tiver sufixo de tamanho, retorna a própria URL (sem preview)
+  return url;
+}
+
+function ProgressiveImage({
+  src,
+  alt,
+}: {
+  src: string;
+  alt: string;
+}) {
+  const thumbSrc = getThumbUrl(src);
+  const [loaded, setLoaded] = useState(false);
+
+  // Reseta quando a src muda (troca de imagem)
+  useEffect(() => {
+    setLoaded(false);
+  }, [src]);
+
+  return (
+    <div className="relative w-full h-full flex items-center justify-center">
+      {/* Preview borrado (carrega rápido) */}
+      {!loaded && (
+        <img
+          src={thumbSrc}
+          alt={alt}
+          className="absolute inset-0 w-full h-full object-contain block blur-sm scale-105 transition-opacity duration-200"
+          draggable={false}
+        />
+      )}
+
+      {/* Imagem em alta qualidade */}
+      <img
+        src={src}
+        alt={alt}
+        onLoad={() => setLoaded(true)}
+        className={`absolute inset-0 w-full h-full object-contain block transition-opacity duration-300 ${
+          loaded ? "opacity-100" : "opacity-0"
+        }`}
+        draggable={false}
+      />
+
+      {/* Spinner enquanto carrega */}
+      {!loaded && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-8 h-8 border-2 border-white/20 border-t-white/70 rounded-full animate-spin" />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ImageLightbox({
   images,
   initialIndex,
@@ -60,10 +117,16 @@ export function ImageLightbox({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
+  // Pré-carrega a próxima imagem em segundo plano
+  useEffect(() => {
+    if (!isOpen || safeImages.length <= 1) return;
+    const nextIndex = (currentIndex + 1) % safeImages.length;
+    const img = new Image();
+    img.src = safeImages[nextIndex];
+  }, [currentIndex, safeImages, isOpen]);
+
   if (!isOpen || safeImages.length === 0) return null;
 
-  // “área útil” bem grande, sem ficar pequena
-  // (top bar + dots)
   const TOP = 20;
   const DOTS = 20;
 
@@ -113,17 +176,11 @@ export function ImageLightbox({
             <ChevronLeft className="w-10 h-10" />
           </button>
 
-          {/* Image wrapper: garante centralização */}
-          <div className="w-full h-full flex items-center justify-center px-0 md:px-0">
-            <motion.img
-              key={current} // anima troca
-              initial={{ opacity: 0, scale: 0.99 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.18 }}
+          <div className="w-full h-full">
+            <ProgressiveImage
+              key={current}
               src={current}
               alt={`Imagem ${currentIndex + 1}`}
-              className="w-full h-full object-contain block"
-              draggable={false}
             />
           </div>
 
