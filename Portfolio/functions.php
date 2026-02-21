@@ -29,7 +29,6 @@ function arthur_enqueue_react_build() {
   // Escolhe a entrada principal do Vite
   $entry = 'index.html';
   if (!isset($manifest[$entry])) {
-    // fallback: pega a primeira chave do manifest
     $keys = array_keys($manifest);
     $entry = $keys[0] ?? null;
   }
@@ -109,3 +108,10 @@ add_action('rest_api_init', function () {
     ]);
   }
 });
+
+// ============================================================
+// Favicon personalizado
+// ============================================================
+add_action('wp_head', function () {
+  echo '<link rel="icon" type="image/png" href="' . get_template_directory_uri() . '/favicon.png">';
+}, 1);
