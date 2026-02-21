@@ -30,7 +30,7 @@ export function useWordPressProjects(limit?: number): UseWordPressProjectsResult
     queryKey: ["wordpress-projects", WORDPRESS_URL],
     queryFn: fetchWordPressProjects,
     enabled: isConfigured,
-    staleTime: 0, // forçar refetch enquanto ajusta
+    staleTime: 0,
     gcTime: 30 * 60 * 1000,
     retry: 2,
     refetchOnWindowFocus: false,
@@ -46,9 +46,11 @@ export function useWordPressProjects(limit?: number): UseWordPressProjectsResult
     projects = wpProjects.map((wp) => ({
       id: wp.id,
       wordpressId: wp.wordpressId,
-      slug: wp.slug, // ✅ AQUI é a parte importante
+      slug: wp.slug,
       title: wp.title,
       category: wp.category,
+      category_pt: wp.category_pt,
+      category_en: wp.category_en,
       description: wp.description,
       description_pt: wp.description_pt,
       description_en: wp.description_en,
