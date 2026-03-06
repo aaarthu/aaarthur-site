@@ -134,22 +134,28 @@ function extractMediaFromContent(html: string = ""): string[] {
     });
   });
 
-  // ── VideoPress: bloco wp-block-embed is-provider-videopress ──
-  // O Gutenberg renderiza o URL do VideoPress como texto dentro de um <div>
-  Array.from(doc.querySelectorAll(".wp-block-embed.is-provider-videopress .wp-block-embed__wrapper, figure.wp-block-video.is-provider-videopress div")).forEach((wrapper) => {
+  // ── VideoPress: decodifica &amp; e varre o HTML bruto ──
+  // O WordPress salva a URL como texto dentro de .wp-block-embed__wrapper
+  // Ex: "https://videopress.com/v/SVa110Vu?resizeToParent=true&amp;cover=true"
+  const htmlDecoded = html.replace(/&amp;/g, "&").replace(/&#038;/g, "&");
+  const seen = new Set<string>();
+  for (const source of [html, htmlDecoded]) {
+    const vpMatches = source.matchAll(/https?:\/\/videopress\.com\/v\/([a-zA-Z0-9]+)/g);
+    for (const m of vpMatches) {
+      const vpUrl = `https://videopress.com/v/${m[1]}`;
+      if (!seen.has(vpUrl)) { seen.add(vpUrl); urls.push(vpUrl); }
+    }
+  }
+
+  // ── VideoPress via textContent dos wrappers ──
+  Array.from(doc.querySelectorAll(".wp-block-embed__wrapper, .wp-block-embed")).forEach((wrapper) => {
     const text = (wrapper.textContent || "").trim();
-    if (text.includes("videopress.com/v/")) {
-      // extrai a URL do texto
-      const match = text.match(/(https?:\/\/videopress\.com\/v\/[a-zA-Z0-9]+)/);
-      if (match) urls.push(match[1]);
+    const match = text.match(/https?:\/\/videopress\.com\/v\/([a-zA-Z0-9]+)/);
+    if (match) {
+      const vpUrl = `https://videopress.com/v/${match[1]}`;
+      if (!seen.has(vpUrl)) { seen.add(vpUrl); urls.push(vpUrl); }
     }
   });
-
-  // ── VideoPress: qualquer texto no HTML que contenha URL do VideoPress ──
-  const vpMatches = html.matchAll(/https?:\/\/videopress\.com\/v\/([a-zA-Z0-9]+)/g);
-  for (const m of vpMatches) {
-    urls.push(`https://videopress.com/v/${m[1]}`);
-  }
 
   // ── Vídeos: links diretos para arquivo de vídeo ──
   Array.from(doc.querySelectorAll("a[href]")).forEach((a) => {
