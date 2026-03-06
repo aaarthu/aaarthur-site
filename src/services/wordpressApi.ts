@@ -216,3 +216,99 @@ function transformProject(wp: WordPressProject): TransformedProject {
     details: undefined,
   };
 }
+export interface WordPressSlide {
+  id: number;
+  slug: string;
+  title: { rendered: string };
+  acf?: Record<string, any>;
+  meta?: Record<string, any>;
+  mime_type?: string;
+  source_url?: string;
+  media_details?: {
+    sizes?: {
+      full?: { source_url: string };
+      large?: { source_url: string };
+      medium_large?: { source_url: string };
+    };
+  };
+  _embedded?: {
+    "wp:featuredmedia"?: Array<any>;
+  };
+}
+
+export interface TransformedSlide {
+  id: string;
+  wordpressId: number;
+  slug: string;
+  title: string;
+  url: string;        // URL da imagem ou vídeo
+  type: "image" | "video";
+  thumbnail: string;  // sempre uma imagem (para o card da grade)
+  order: number;
+}
+
+function bestMediaUrl(item: WordPressSlide): string {
+  return (
+    item.media_details?.sizes?.full?.source_url ||
+    item.media_details?.sizes?.large?.source_url ||
+    item.media_details?.sizes?.medium_large?.source_url ||
+    item.source_url ||
+    ""
+  );
+}
+
+function isVideo(item: WordPressSlide): boolean {
+  return (
+    (item.mime_type?.startsWith("video/") ?? false) ||
+    (item.source_url?.match(/\.(mp4|webm|ogg|mov)(\?|$)/i) != null)
+  );
+}
+
+export async function fetchWordPressSlides(): Promise<TransformedSlide[]> {
+  if (!WORDPRESS_URL) throw new Error("WordPress URL not configured");
+
+  // Busca itens do custom post type "slide" — ajuste o endpoint se necessário
+  // Opção A: Custom Post Type "slide"
+  const res = await fetch(
+    `${WORDPRESS_URL}/wp-json/wp/v2/slide?per_page=100&_embed&acf_format=standard`,
+    { headers: { "Content-Type": "application/json" } }
+  );
+
+  // Opção B (alternativa): buscar da galeria de mídia com categoria/tag específica
+  // const res = await fetch(
+  //   `${WORDPRESS_URL}/wp-json/wp/v2/media?per_page=100&media_type=image&_embed`,
+  //   { headers: { "Content-Type": "application/json" } }
+  // );
+
+  if (!res.ok) throw new Error(`Failed to fetch slides: ${res.statusText}`);
+
+  const data: WordPressSlide[] = await res.json();
+
+  return data.map((item, index) => {
+    const video = isVideo(item);
+    const mediaUrl = bestMediaUrl(item);
+
+    // Para vídeos, tenta pegar thumbnail do campo ACF ou featured media
+    const featuredMedia = item._embedded?.["wp:featuredmedia"]?.[0];
+    const thumbnailFromFeatured =
+      featuredMedia?.media_details?.sizes?.large?.source_url ||
+      featuredMedia?.source_url ||
+      "";
+
+    const thumbnail = video
+      ? (item.acf?.thumbnail || thumbnailFromFeatured || "")
+      : mediaUrl;
+
+    return {
+      id: `slide-${item.id}`,
+      wordpressId: item.id,
+      slug: item.slug,
+      title: stripHtml(item.title?.rendered || ""),
+      url: mediaUrl,
+      type: video ? "video" : "image",
+      thumbnail,
+      order: item.acf?.order ?? index,
+    };
+  }).sort((a, b) => a.order - b.order);
+}
+
