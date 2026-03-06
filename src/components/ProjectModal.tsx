@@ -1,9 +1,14 @@
+// src/components/ProjectModal.tsx
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronLeft } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, ZoomIn, Play } from "lucide-react";
 import { Project } from "@/data/projects";
 import { ImageLightbox } from "./ImageLightbox";
 import { useTranslation } from "react-i18next";
+
+// ─── Slugs que ativam o modo grade de slides ──────────────────
+// Adicione aqui o slug exato do projeto "Apresentações" no WordPress
+const SLIDE_GALLERY_SLUGS = ["apresentacoes", "apresentações", "slides", "presentations"];
 
 interface ProjectModalProps {
   project: Project | null;
@@ -23,12 +28,198 @@ function isValidImageUrl(url: string) {
   );
 }
 
+function isVideoUrl(url: string) {
+  return /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
+}
+
+// ─── Grade de miniaturas + lightbox ──────────────────────────
+interface SlideGridProps {
+  images: string[];
+}
+
+function SlideGrid({ images }: SlideGridProps) {
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [current, setCurrent] = useState(0);
+
+  const openLightbox = (index: number) => {
+    setSelectedIndex(index);
+    setCurrent(index);
+    setLightboxOpen(true);
+  };
+
+  const prev = () => setCurrent((c) => (c - 1 + images.length) % images.length);
+  const next = () => setCurrent((c) => (c + 1) % images.length);
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") { e.stopPropagation(); prev(); }
+      if (e.key === "ArrowRight") { e.stopPropagation(); next(); }
+      if (e.key === "Escape") { e.stopPropagation(); setLightboxOpen(false); }
+    };
+    window.addEventListener("keydown", handler, { capture: true });
+    return () => window.removeEventListener("keydown", handler, { capture: true });
+  }, [lightboxOpen, images.length]);
+
+  useEffect(() => {
+    if (lightboxOpen) setCurrent(selectedIndex);
+  }, [selectedIndex]);
+
+  return (
+    <>
+      {/* Grade */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-10">
+        {images.map((img, idx) => {
+          const video = isVideoUrl(img);
+          return (
+            <motion.button
+              key={`${img}-${idx}`}
+              onClick={() => openLightbox(idx)}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: idx * 0.02 }}
+              className="group relative aspect-video rounded-xl overflow-hidden bg-black/5 border border-black/8 hover:border-black/20 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-black/30"
+            >
+              {video ? (
+                <video
+                  src={img}
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover brightness-90 group-hover:brightness-100 transition-all duration-300 group-hover:scale-105"
+                />
+              ) : (
+                <img
+                  src={img}
+                  alt={`Slide ${idx + 1}`}
+                  loading="lazy"
+                  className="w-full h-full object-cover brightness-90 group-hover:brightness-100 transition-all duration-300 group-hover:scale-105"
+                />
+              )}
+
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                {video ? (
+                  <div className="w-10 h-10 rounded-full bg-white/20 border border-white/60 flex items-center justify-center">
+                    <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+                  </div>
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-white/20 border border-white/60 flex items-center justify-center">
+                    <ZoomIn className="w-4 h-4 text-white" />
+                  </div>
+                )}
+              </div>
+
+              {/* Badge vídeo */}
+              {video && (
+                <div className="absolute top-2 right-2 bg-black/70 text-white font-dmsans text-[9px] tracking-widest uppercase px-1.5 py-0.5 rounded">
+                  Vídeo
+                </div>
+              )}
+
+              {/* Número */}
+              <div className="absolute bottom-2 left-2 font-dmsans text-[9px] tracking-widest text-white/50 opacity-0 group-hover:opacity-100 transition-opacity">
+                {String(idx + 1).padStart(2, "0")}
+              </div>
+            </motion.button>
+          );
+        })}
+      </div>
+
+      {/* Lightbox inline */}
+      <AnimatePresence>
+        {lightboxOpen && (
+          <motion.div
+            className="fixed inset-0 z-[200] flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="absolute inset-0 bg-black/85 backdrop-blur-md" onClick={() => setLightboxOpen(false)} />
+
+            <div className="relative z-10 w-full max-w-5xl px-4 md:px-16">
+              <motion.div
+                key={current}
+                initial={{ opacity: 0, scale: 0.97 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.18 }}
+                className="rounded-2xl overflow-hidden aspect-video bg-black border border-white/10 shadow-2xl"
+              >
+                {isVideoUrl(images[current]) ? (
+                  <video
+                    src={images[current]}
+                    controls
+                    autoPlay
+                    className="w-full h-full object-contain bg-black"
+                  />
+                ) : (
+                  <img
+                    src={images[current]}
+                    alt={`Slide ${current + 1}`}
+                    className="w-full h-full object-contain bg-black"
+                  />
+                )}
+              </motion.div>
+
+              {/* Setas */}
+              <button
+                onClick={prev}
+                className="absolute left-0 top-1/2 -translate-y-1/2 md:-translate-x-2 w-11 h-11 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors"
+              >
+                <ChevronLeft className="w-5 h-5 text-white" />
+              </button>
+              <button
+                onClick={next}
+                className="absolute right-0 top-1/2 -translate-y-1/2 md:translate-x-2 w-11 h-11 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors"
+              >
+                <ChevronRight className="w-5 h-5 text-white" />
+              </button>
+
+              {/* Fechar */}
+              <button
+                onClick={() => setLightboxOpen(false)}
+                className="absolute -top-12 right-0 w-9 h-9 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors"
+              >
+                <X className="w-4 h-4 text-white" />
+              </button>
+
+              {/* Contador + dots */}
+              <div className="mt-4 flex items-center justify-center gap-3">
+                <span className="font-dmsans text-[11px] tracking-widest uppercase text-white/40">
+                  {current + 1} / {images.length}
+                </span>
+              </div>
+              <div className="mt-2 flex justify-center gap-1.5 flex-wrap">
+                {images.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrent(i)}
+                    className={`transition-all duration-200 rounded-full
+                      ${i === current ? "w-5 h-1.5 bg-white" : "w-1.5 h-1.5 bg-white/30 hover:bg-white/60"}
+                    `}
+                  />
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
+// ─── Modal principal ──────────────────────────────────────────
 export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
   const { t, i18n } = useTranslation();
   const isEn = i18n.language?.startsWith("en");
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+  // Detecta se é o projeto de apresentações pelo slug
+  const isSlideGalleryMode = Boolean(
+    project?.slug && SLIDE_GALLERY_SLUGS.includes(project.slug.toLowerCase())
+  );
 
   useEffect(() => {
     if (isOpen) document.body.style.overflow = "hidden";
@@ -181,34 +372,39 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
                       </div>
                     )}
 
-                    {/* IMAGENS */}
-                    <div className="mt-10 space-y-5">
-                      {allImages.length === 0 ? (
-                        <div className="rounded-2xl border border-black/10 bg-black/[0.03] p-6">
-                          {t("modal.noImages")}
-                        </div>
-                      ) : (
-                        allImages.map((img, idx) => (
-                          <motion.button
-                            key={`${img}-${idx}`}
-                            onClick={() => openLightbox(idx)}
-                            className="w-full rounded-2xl overflow-hidden bg-black/[0.03] border border-black/10 hover:border-black/20 transition-colors"
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.2 }}
-                          >
-                            <div className="relative aspect-[16/9]">
-                              <img
-                                src={img}
-                                alt={`${project.title} - ${idx + 1}`}
-                                loading={idx === 0 ? "eager" : "lazy"}
-                                className="absolute inset-0 w-full h-full object-contain"
-                              />
-                            </div>
-                          </motion.button>
-                        ))
-                      )}
-                    </div>
+                    {/* ── MODO GRADE (projeto de apresentações) ── */}
+                    {isSlideGalleryMode ? (
+                      <SlideGrid images={allImages} />
+                    ) : (
+                      /* ── MODO NORMAL (empilhado) ── */
+                      <div className="mt-10 space-y-5">
+                        {allImages.length === 0 ? (
+                          <div className="rounded-2xl border border-black/10 bg-black/[0.03] p-6">
+                            {t("modal.noImages")}
+                          </div>
+                        ) : (
+                          allImages.map((img, idx) => (
+                            <motion.button
+                              key={`${img}-${idx}`}
+                              onClick={() => openLightbox(idx)}
+                              className="w-full rounded-2xl overflow-hidden bg-black/[0.03] border border-black/10 hover:border-black/20 transition-colors"
+                              initial={{ opacity: 0, y: 8 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <div className="relative aspect-[16/9]">
+                                <img
+                                  src={img}
+                                  alt={`${project.title} - ${idx + 1}`}
+                                  loading={idx === 0 ? "eager" : "lazy"}
+                                  className="absolute inset-0 w-full h-full object-contain"
+                                />
+                              </div>
+                            </motion.button>
+                          ))
+                        )}
+                      </div>
+                    )}
 
                   </div>
                 </div>
@@ -216,13 +412,15 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
             </div>
           </div>
 
-          {/* LIGHTBOX */}
-          <ImageLightbox
-            images={allImages}
-            initialIndex={selectedImageIndex}
-            isOpen={lightboxOpen}
-            onClose={() => setLightboxOpen(false)}
-          />
+          {/* LIGHTBOX (modo normal) */}
+          {!isSlideGalleryMode && (
+            <ImageLightbox
+              images={allImages}
+              initialIndex={selectedImageIndex}
+              isOpen={lightboxOpen}
+              onClose={() => setLightboxOpen(false)}
+            />
+          )}
         </motion.div>
       )}
     </AnimatePresence>
