@@ -74,8 +74,11 @@ function bestUrlFromSrcSet(srcset: string | null): string {
 
 // ── Remove sufixo de tamanho da URL (ex: -1024x768) para obter original ──
 function toOriginalSize(url: string): string {
-  // WordPress gera URLs como: imagem-1024x768.jpg → imagem.jpg
-  return url.replace(/-\d+x\d+(\.\w+)$/, "$1");
+  // Remove parâmetros do Jetpack CDN: ?fit=960%2C540&ssl=1 → URL limpa
+  let clean = url.split("?")[0];
+  // Remove sufixo de tamanho: imagem-1024x768.jpg → imagem.jpg
+  clean = clean.replace(/-\d+x\d+(\.\w+)$/, "$1");
+  return clean;
 }
 
 // ── Melhor URL de imagem: prioriza original/full, remove resize ──
@@ -189,6 +192,22 @@ function getCustomField(wp: WordPressProject, fieldName: string): string {
   );
 }
 
+// Busca URL do vídeo VideoPress via API de mídia do WordPress
+async function fetchVideoPressUrl(guid: string): Promise<string> {
+  try {
+    const res = await fetch(
+      `${WORDPRESS_URL}/wp-json/wp/v2/media?search=${guid}&per_page=5`,
+      { headers: { "Content-Type": "application/json" } }
+    );
+    if (!res.ok) return "";
+    const data = await res.json();
+    const item = data?.[0];
+    return item?.source_url || item?.guid?.rendered || "";
+  } catch {
+    return "";
+  }
+}
+
 export async function fetchWordPressProjects(): Promise<TransformedProject[]> {
   if (!WORDPRESS_URL) throw new Error("WordPress URL not configured");
 
@@ -273,8 +292,19 @@ function transformProject(wp: WordPressProject): TransformedProject {
   const description =
     stripHtml(wp.excerpt?.rendered || "") || stripHtml(contentHtml).slice(0, 220);
 
-  const thumbnail = featured || contentMedia[0] || "";
-  const images = contentMedia.length ? contentMedia : [thumbnail].filter(Boolean);
+  // Adiciona vídeos dos campos ACF video_1 e video_2 ao final do array
+  const acfVideos = [
+    getCustomField(wp, "video_1"),
+    getCustomField(wp, "video_2"),
+    getCustomField(wp, "video_3"),
+  ].filter(Boolean).filter(isValidUrl);
+
+  const allMedia = [...contentMedia, ...acfVideos];
+  // Remove duplicatas mantendo ordem
+  const uniqueMedia = Array.from(new Set(allMedia));
+
+  const thumbnail = featured || uniqueMedia.find(u => !u.match(/\.(mp4|webm|ogg|mov)(\?|$)/i)) || uniqueMedia[0] || "";
+  const images = uniqueMedia.length ? uniqueMedia : [thumbnail].filter(Boolean);
 
   return {
     id: `wp-${wp.id}`,
