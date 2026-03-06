@@ -72,6 +72,34 @@ function bestUrlFromSrcSet(srcset: string | null): string {
   return entries[0]?.url || "";
 }
 
+// ── Remove sufixo de tamanho da URL (ex: -1024x768) para obter original ──
+function toOriginalSize(url: string): string {
+  // WordPress gera URLs como: imagem-1024x768.jpg → imagem.jpg
+  return url.replace(/-\d+x\d+(\.\w+)$/, "$1");
+}
+
+// ── Melhor URL de imagem: prioriza original/full, remove resize ──
+function bestImageUrl(img: Element): string {
+  const candidates = [
+    img.getAttribute("data-orig-file"),         // Jetpack: URL original
+    img.getAttribute("data-large-file"),         // Jetpack: large
+    img.getAttribute("data-full-url"),           // alguns temas
+  ].filter(isValidUrl) as string[];
+
+  if (candidates.length) return candidates[0];
+
+  // Tenta pegar a maior do srcset
+  const srcset = img.getAttribute("srcset") || img.getAttribute("data-srcset") || "";
+  if (srcset) {
+    const best = bestUrlFromSrcSet(srcset);
+    if (isValidUrl(best)) return toOriginalSize(best);
+  }
+
+  // Fallback: src normal, remove sufixo de tamanho
+  const src = img.getAttribute("data-src") || img.getAttribute("src") || "";
+  return isValidUrl(src) ? toOriginalSize(src) : "";
+}
+
 // ── Extrai imagens E vídeos do conteúdo HTML ─────────────────
 function extractMediaFromContent(html: string = ""): string[] {
   if (!html) return [];
@@ -80,32 +108,37 @@ function extractMediaFromContent(html: string = ""): string[] {
 
   const urls: string[] = [];
 
-  // Imagens
+  // ── Imagens (bloco Image e bloco Gallery do Gutenberg) ──
   Array.from(doc.querySelectorAll("img")).forEach((img) => {
-    const src =
-      img.getAttribute("data-orig-file") ||
-      img.getAttribute("data-large-file") ||
-      bestUrlFromSrcSet(img.getAttribute("srcset")) ||
-      img.getAttribute("data-src") ||
-      img.getAttribute("src") ||
-      "";
-    if (isValidUrl(src)) urls.push(src);
+    const url = bestImageUrl(img);
+    if (url) urls.push(url);
   });
 
-  // Vídeos — tag <video> com src direto ou <source> dentro
+  // ── Vídeos: bloco wp-block-video do Gutenberg ──
+  // Estrutura gerada: <figure class="wp-block-video"><video src="..."></video></figure>
+  Array.from(doc.querySelectorAll(".wp-block-video video, figure.wp-block-video video")).forEach((v) => {
+    const src = v.getAttribute("src") || "";
+    if (isValidUrl(src)) urls.push(src);
+
+    // Tenta <source> interno
+    v.querySelectorAll("source").forEach((source) => {
+      const s = source.getAttribute("src") || "";
+      if (isValidUrl(s)) urls.push(s);
+    });
+  });
+
+  // ── Vídeos: tag <video> genérica com src direto ──
   Array.from(doc.querySelectorAll("video")).forEach((video) => {
     const src = video.getAttribute("src") || "";
-    if (isValidUrl(src)) {
-      urls.push(src);
-    } else {
-      // tenta pegar do primeiro <source>
-      const source = video.querySelector("source");
-      const sourceSrc = source?.getAttribute("src") || "";
-      if (isValidUrl(sourceSrc)) urls.push(sourceSrc);
-    }
+    if (isValidUrl(src)) urls.push(src);
+
+    video.querySelectorAll("source").forEach((source) => {
+      const s = source.getAttribute("src") || "";
+      if (isValidUrl(s)) urls.push(s);
+    });
   });
 
-  // Vídeos inseridos via bloco wp-block-video (anchor com href para .mp4)
+  // ── Vídeos: links diretos para arquivo de vídeo ──
   Array.from(doc.querySelectorAll("a[href]")).forEach((a) => {
     const href = a.getAttribute("href") || "";
     if (isValidUrl(href) && /\.(mp4|webm|ogg|mov)(\?|$)/i.test(href)) {
@@ -113,13 +146,7 @@ function extractMediaFromContent(html: string = ""): string[] {
     }
   });
 
-  // Vídeos via figura wp-block-video (src no atributo data)
-  Array.from(doc.querySelectorAll("figure.wp-block-video video, .wp-block-video video")).forEach((v) => {
-    const src = (v as HTMLVideoElement).src || v.getAttribute("src") || "";
-    if (isValidUrl(src)) urls.push(src);
-  });
-
-  return Array.from(new Set(urls));
+  return Array.from(new Set(urls.filter(Boolean)));
 }
 
 function featuredFromEmbedded(wp: WordPressProject): string {
