@@ -250,11 +250,7 @@ function transformProject(wp: WordPressProject): TransformedProject {
   const featured = featuredFromEmbedded(wp);
   const contentHtml = wp.content?.rendered || "";
   const contentMedia = extractMediaFromContent(contentHtml);
-  
-  console.log("MEDIA EXTRAÍDA:", contentMedia); // ← adicione esta linha
-
-  // Agora extrai imagens E vídeos
-  const contentMedia = extractMediaFromContent(contentHtml);
+  console.log("MEDIA EXTRAÍDA:", contentMedia);
 
   const category_pt =
     getCustomField(wp, "category_pt") ||
