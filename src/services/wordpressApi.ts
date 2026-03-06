@@ -23,14 +23,14 @@ export interface TransformedProject {
   wordpressId: number;
   slug: string;
   title: string;
-  category: string;       // fallback / pt
+  category: string;
   category_pt: string;
   category_en: string;
   description: string;
   description_pt: string;
   description_en: string;
   thumbnail: string;
-  images: string[];
+  images: string[]; // inclui URLs de vídeo (.mp4 etc.) para projetos de slides
   details?: {
     year?: string;
     client?: string;
@@ -72,22 +72,53 @@ function bestUrlFromSrcSet(srcset: string | null): string {
   return entries[0]?.url || "";
 }
 
-function extractImagesFromContent(html: string = ""): string[] {
+// ── Extrai imagens E vídeos do conteúdo HTML ─────────────────
+function extractMediaFromContent(html: string = ""): string[] {
   if (!html) return [];
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, "text/html");
-  const imgs = Array.from(doc.querySelectorAll("img"));
-  const urls = imgs
-    .map((img) => {
-      const src =
-        img.getAttribute("data-orig-file") ||
-        img.getAttribute("data-large-file") ||
-        bestUrlFromSrcSet(img.getAttribute("srcset")) ||
-        img.getAttribute("data-src") ||
-        img.getAttribute("src");
-      return src || "";
-    })
-    .filter(isValidUrl);
+
+  const urls: string[] = [];
+
+  // Imagens
+  Array.from(doc.querySelectorAll("img")).forEach((img) => {
+    const src =
+      img.getAttribute("data-orig-file") ||
+      img.getAttribute("data-large-file") ||
+      bestUrlFromSrcSet(img.getAttribute("srcset")) ||
+      img.getAttribute("data-src") ||
+      img.getAttribute("src") ||
+      "";
+    if (isValidUrl(src)) urls.push(src);
+  });
+
+  // Vídeos — tag <video> com src direto ou <source> dentro
+  Array.from(doc.querySelectorAll("video")).forEach((video) => {
+    const src = video.getAttribute("src") || "";
+    if (isValidUrl(src)) {
+      urls.push(src);
+    } else {
+      // tenta pegar do primeiro <source>
+      const source = video.querySelector("source");
+      const sourceSrc = source?.getAttribute("src") || "";
+      if (isValidUrl(sourceSrc)) urls.push(sourceSrc);
+    }
+  });
+
+  // Vídeos inseridos via bloco wp-block-video (anchor com href para .mp4)
+  Array.from(doc.querySelectorAll("a[href]")).forEach((a) => {
+    const href = a.getAttribute("href") || "";
+    if (isValidUrl(href) && /\.(mp4|webm|ogg|mov)(\?|$)/i.test(href)) {
+      urls.push(href);
+    }
+  });
+
+  // Vídeos via figura wp-block-video (src no atributo data)
+  Array.from(doc.querySelectorAll("figure.wp-block-video video, .wp-block-video video")).forEach((v) => {
+    const src = (v as HTMLVideoElement).src || v.getAttribute("src") || "";
+    if (isValidUrl(src)) urls.push(src);
+  });
+
   return Array.from(new Set(urls));
 }
 
@@ -102,9 +133,7 @@ function featuredFromEmbedded(wp: WordPressProject): string {
   return isValidUrl(url) ? url : "";
 }
 
-// Lê um campo customizado tentando meta, acf e _embedded
 function getCustomField(wp: WordPressProject, fieldName: string): string {
-  // Tenta direto na raiz (register_rest_field), depois meta e acf
   const root = (wp as any)[fieldName];
   if (root) return root;
   return (
@@ -144,9 +173,10 @@ export async function fetchWordPressProjectById(
   id: number
 ): Promise<TransformedProject | null> {
   if (!WORDPRESS_URL) throw new Error("WordPress URL not configured");
-  const res = await fetch(`${WORDPRESS_URL}/wp-json/wp/v2/projeto/${id}?_embed&acf_format=standard`, {
-    headers: { "Content-Type": "application/json" },
-  });
+  const res = await fetch(
+    `${WORDPRESS_URL}/wp-json/wp/v2/projeto/${id}?_embed&acf_format=standard`,
+    { headers: { "Content-Type": "application/json" } }
+  );
   if (!res.ok) {
     if (res.status === 404) return null;
     throw new Error(`Failed to fetch project: ${res.statusText}`);
@@ -173,9 +203,10 @@ export async function fetchWordPressProjectBySlug(
 function transformProject(wp: WordPressProject): TransformedProject {
   const featured = featuredFromEmbedded(wp);
   const contentHtml = wp.content?.rendered || "";
-  const contentImages = extractImagesFromContent(contentHtml);
 
-  // Categoria: prioriza campos customizados, cai na taxonomia como último recurso
+  // Agora extrai imagens E vídeos
+  const contentMedia = extractMediaFromContent(contentHtml);
+
   const category_pt =
     getCustomField(wp, "category_pt") ||
     wp._embedded?.["wp:term"]?.[0]?.[0]?.name ||
@@ -183,7 +214,7 @@ function transformProject(wp: WordPressProject): TransformedProject {
 
   const category_en =
     getCustomField(wp, "category_en") ||
-    category_pt; // fallback: mostra o PT se EN não tiver preenchido
+    category_pt;
 
   const description_pt =
     getCustomField(wp, "description_pt") ||
@@ -197,8 +228,8 @@ function transformProject(wp: WordPressProject): TransformedProject {
   const description =
     stripHtml(wp.excerpt?.rendered || "") || stripHtml(contentHtml).slice(0, 220);
 
-  const thumbnail = featured || contentImages[0] || "";
-  const images = contentImages.length ? contentImages : [thumbnail].filter(Boolean);
+  const thumbnail = featured || contentMedia[0] || "";
+  const images = contentMedia.length ? contentMedia : [thumbnail].filter(Boolean);
 
   return {
     id: `wp-${wp.id}`,
@@ -216,99 +247,3 @@ function transformProject(wp: WordPressProject): TransformedProject {
     details: undefined,
   };
 }
-export interface WordPressSlide {
-  id: number;
-  slug: string;
-  title: { rendered: string };
-  acf?: Record<string, any>;
-  meta?: Record<string, any>;
-  mime_type?: string;
-  source_url?: string;
-  media_details?: {
-    sizes?: {
-      full?: { source_url: string };
-      large?: { source_url: string };
-      medium_large?: { source_url: string };
-    };
-  };
-  _embedded?: {
-    "wp:featuredmedia"?: Array<any>;
-  };
-}
-
-export interface TransformedSlide {
-  id: string;
-  wordpressId: number;
-  slug: string;
-  title: string;
-  url: string;        // URL da imagem ou vídeo
-  type: "image" | "video";
-  thumbnail: string;  // sempre uma imagem (para o card da grade)
-  order: number;
-}
-
-function bestMediaUrl(item: WordPressSlide): string {
-  return (
-    item.media_details?.sizes?.full?.source_url ||
-    item.media_details?.sizes?.large?.source_url ||
-    item.media_details?.sizes?.medium_large?.source_url ||
-    item.source_url ||
-    ""
-  );
-}
-
-function isVideo(item: WordPressSlide): boolean {
-  return (
-    (item.mime_type?.startsWith("video/") ?? false) ||
-    (item.source_url?.match(/\.(mp4|webm|ogg|mov)(\?|$)/i) != null)
-  );
-}
-
-export async function fetchWordPressSlides(): Promise<TransformedSlide[]> {
-  if (!WORDPRESS_URL) throw new Error("WordPress URL not configured");
-
-  // Busca itens do custom post type "slide" — ajuste o endpoint se necessário
-  // Opção A: Custom Post Type "slide"
-  const res = await fetch(
-    `${WORDPRESS_URL}/wp-json/wp/v2/slide?per_page=100&_embed&acf_format=standard`,
-    { headers: { "Content-Type": "application/json" } }
-  );
-
-  // Opção B (alternativa): buscar da galeria de mídia com categoria/tag específica
-  // const res = await fetch(
-  //   `${WORDPRESS_URL}/wp-json/wp/v2/media?per_page=100&media_type=image&_embed`,
-  //   { headers: { "Content-Type": "application/json" } }
-  // );
-
-  if (!res.ok) throw new Error(`Failed to fetch slides: ${res.statusText}`);
-
-  const data: WordPressSlide[] = await res.json();
-
-  return data.map((item, index) => {
-    const video = isVideo(item);
-    const mediaUrl = bestMediaUrl(item);
-
-    // Para vídeos, tenta pegar thumbnail do campo ACF ou featured media
-    const featuredMedia = item._embedded?.["wp:featuredmedia"]?.[0];
-    const thumbnailFromFeatured =
-      featuredMedia?.media_details?.sizes?.large?.source_url ||
-      featuredMedia?.source_url ||
-      "";
-
-    const thumbnail = video
-      ? (item.acf?.thumbnail || thumbnailFromFeatured || "")
-      : mediaUrl;
-
-    return {
-      id: `slide-${item.id}`,
-      wordpressId: item.id,
-      slug: item.slug,
-      title: stripHtml(item.title?.rendered || ""),
-      url: mediaUrl,
-      type: video ? "video" : "image",
-      thumbnail,
-      order: item.acf?.order ?? index,
-    };
-  }).sort((a, b) => a.order - b.order);
-}
-
