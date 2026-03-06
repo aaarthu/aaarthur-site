@@ -81,7 +81,7 @@ function SlideGrid({ images }: { images: string[] }) {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-10">
         {images.map((img, idx) => {
           const video = isVideoUrl(img);
-          const thumb = isVideoPressUrl(img) ? videoPressThumbnail(img) : img;
+          const vpThumb = isVideoPressUrl(img) ? videoPressThumbnail(img) : "";
 
           return (
             <motion.button
@@ -92,12 +92,33 @@ function SlideGrid({ images }: { images: string[] }) {
               transition={{ duration: 0.2, delay: idx * 0.02 }}
               className="group relative aspect-video rounded-xl overflow-hidden bg-black/5 border border-black/8 hover:border-black/20 transition-all focus:outline-none"
             >
-              <img
-                src={thumb}
-                alt={`Slide ${idx + 1}`}
-                loading="lazy"
-                className="w-full h-full object-cover brightness-90 group-hover:brightness-100 transition-all duration-300 group-hover:scale-105"
-              />
+              {video ? (
+                vpThumb ? (
+                  // VideoPress: usa poster estático
+                  <img
+                    src={vpThumb}
+                    alt={`Vídeo ${idx + 1}`}
+                    loading="lazy"
+                    className="w-full h-full object-cover brightness-90 group-hover:brightness-100 transition-all duration-300 group-hover:scale-105"
+                  />
+                ) : (
+                  // MP4 direto: usa <video> para capturar primeiro frame
+                  <video
+                    src={`${img}#t=0.5`}
+                    preload="metadata"
+                    muted
+                    playsInline
+                    className="w-full h-full object-cover brightness-90 group-hover:brightness-100 transition-all duration-300 group-hover:scale-105 pointer-events-none"
+                  />
+                )
+              ) : (
+                <img
+                  src={img}
+                  alt={`Slide ${idx + 1}`}
+                  loading="lazy"
+                  className="w-full h-full object-cover brightness-90 group-hover:brightness-100 transition-all duration-300 group-hover:scale-105"
+                />
+              )}
               <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
                 <div className="w-10 h-10 rounded-full bg-white/20 border border-white/60 flex items-center justify-center">
                   {video
