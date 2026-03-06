@@ -51,6 +51,32 @@ function videoPressThumbnail(url: string): string {
   return `https://videos.files.wordpress.com/${match[1]}/poster.jpg`;
 }
 
+// Gera URL de miniatura via Jetpack CDN (para cards da grade)
+function toThumbnailUrl(url: string, width = 600, height = 338): string {
+  // Já é uma URL do Jetpack CDN (i0.wp.com)?
+  if (url.includes("i0.wp.com") || url.includes(".wp.com/")) {
+    // Substitui ou adiciona parâmetros de tamanho
+    const base = url.split("?")[0];
+    return `${base}?fit=${width}%2C${height}&ssl=1&quality=75`;
+  }
+  // URL direta do WordPress — tenta construir via Jetpack CDN
+  if (url.includes("wp-content/uploads")) {
+    const domain = url.match(/https?:\/\/([^/]+)/)?.[1] || "";
+    const path = url.replace(/https?:\/\/[^/]+/, "");
+    return `https://i0.wp.com/${domain}${path}?fit=${width}%2C${height}&ssl=1&quality=75`;
+  }
+  return url;
+}
+
+// Gera URL fullsize via Jetpack CDN (para lightbox)
+function toFullsizeUrl(url: string): string {
+  if (url.includes("i0.wp.com") || url.includes(".wp.com/")) {
+    const base = url.split("?")[0];
+    return `${base}?fit=1920%2C1080&ssl=1&quality=90`;
+  }
+  return url;
+}
+
 // ─── Grade de miniaturas + lightbox ──────────────────────────
 function SlideGrid({ images }: { images: string[] }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -82,6 +108,8 @@ function SlideGrid({ images }: { images: string[] }) {
         {images.map((img, idx) => {
           const video = isVideoUrl(img);
           const vpThumb = isVideoPressUrl(img) ? videoPressThumbnail(img) : "";
+          // Usa miniatura pequena no card, fullsize só no lightbox
+          const cardSrc = video ? vpThumb : toThumbnailUrl(img);
 
           return (
             <motion.button
@@ -92,30 +120,21 @@ function SlideGrid({ images }: { images: string[] }) {
               transition={{ duration: 0.2, delay: idx * 0.02 }}
               className="group relative aspect-video rounded-xl overflow-hidden bg-black/5 border border-black/8 hover:border-black/20 transition-all focus:outline-none"
             >
-              {video ? (
-                vpThumb ? (
-                  // VideoPress: usa poster estático
-                  <img
-                    src={vpThumb}
-                    alt={`Vídeo ${idx + 1}`}
-                    loading="lazy"
-                    className="w-full h-full object-cover brightness-90 group-hover:brightness-100 transition-all duration-300 group-hover:scale-105"
-                  />
-                ) : (
-                  // MP4 direto: usa <video> para capturar primeiro frame
-                  <video
-                    src={`${img}#t=0.5`}
-                    preload="metadata"
-                    muted
-                    playsInline
-                    className="w-full h-full object-cover brightness-90 group-hover:brightness-100 transition-all duration-300 group-hover:scale-105 pointer-events-none"
-                  />
-                )
+              {video && !vpThumb ? (
+                // MP4 direto: usa <video> para capturar primeiro frame
+                <video
+                  src={`${img}#t=0.5`}
+                  preload="metadata"
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover brightness-90 group-hover:brightness-100 transition-all duration-300 group-hover:scale-105 pointer-events-none"
+                />
               ) : (
                 <img
-                  src={img}
-                  alt={`Slide ${idx + 1}`}
+                  src={cardSrc}
+                  alt={video ? `Vídeo ${idx + 1}` : `Slide ${idx + 1}`}
                   loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover brightness-90 group-hover:brightness-100 transition-all duration-300 group-hover:scale-105"
                 />
               )}
@@ -190,7 +209,7 @@ function SlideGrid({ images }: { images: string[] }) {
                 ) : isCurrentVideo ? (
                   <video src={currentUrl} controls autoPlay className="w-full h-full object-contain bg-black" />
                 ) : (
-                  <img src={currentUrl} alt={`Slide ${current + 1}`} className="w-full h-full object-contain bg-black" />
+                  <img src={toFullsizeUrl(currentUrl)} alt={`Slide ${current + 1}`} className="w-full h-full object-contain bg-black" />
                 )}
               </motion.div>
 
