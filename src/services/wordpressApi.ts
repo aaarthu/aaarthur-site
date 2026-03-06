@@ -115,28 +115,41 @@ function extractMediaFromContent(html: string = ""): string[] {
   });
 
   // ── Vídeos: bloco wp-block-video do Gutenberg ──
-  // Estrutura gerada: <figure class="wp-block-video"><video src="..."></video></figure>
   Array.from(doc.querySelectorAll(".wp-block-video video, figure.wp-block-video video")).forEach((v) => {
     const src = v.getAttribute("src") || "";
     if (isValidUrl(src)) urls.push(src);
-
-    // Tenta <source> interno
     v.querySelectorAll("source").forEach((source) => {
       const s = source.getAttribute("src") || "";
       if (isValidUrl(s)) urls.push(s);
     });
   });
 
-  // ── Vídeos: tag <video> genérica com src direto ──
+  // ── Vídeos: tag <video> genérica ──
   Array.from(doc.querySelectorAll("video")).forEach((video) => {
     const src = video.getAttribute("src") || "";
     if (isValidUrl(src)) urls.push(src);
-
     video.querySelectorAll("source").forEach((source) => {
       const s = source.getAttribute("src") || "";
       if (isValidUrl(s)) urls.push(s);
     });
   });
+
+  // ── VideoPress: bloco wp-block-embed is-provider-videopress ──
+  // O Gutenberg renderiza o URL do VideoPress como texto dentro de um <div>
+  Array.from(doc.querySelectorAll(".wp-block-embed.is-provider-videopress .wp-block-embed__wrapper, figure.wp-block-video.is-provider-videopress div")).forEach((wrapper) => {
+    const text = (wrapper.textContent || "").trim();
+    if (text.includes("videopress.com/v/")) {
+      // extrai a URL do texto
+      const match = text.match(/(https?:\/\/videopress\.com\/v\/[a-zA-Z0-9]+)/);
+      if (match) urls.push(match[1]);
+    }
+  });
+
+  // ── VideoPress: qualquer texto no HTML que contenha URL do VideoPress ──
+  const vpMatches = html.matchAll(/https?:\/\/videopress\.com\/v\/([a-zA-Z0-9]+)/g);
+  for (const m of vpMatches) {
+    urls.push(`https://videopress.com/v/${m[1]}`);
+  }
 
   // ── Vídeos: links diretos para arquivo de vídeo ──
   Array.from(doc.querySelectorAll("a[href]")).forEach((a) => {
