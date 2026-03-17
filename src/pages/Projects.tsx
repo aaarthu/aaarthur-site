@@ -22,7 +22,7 @@ const Projects = () => {
   const { projects, isLoading, isError, isUsingFallback } = useWordPressProjects();
 
   // ✅ 1) Se a URL tiver slug, abre o projeto automaticamente
- seEffect(() => {
+ UseEffect(() => {
   if (isLoading) return;
   if (!projects.length) return; // ← linha nova
 
