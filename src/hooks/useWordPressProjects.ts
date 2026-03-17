@@ -57,6 +57,7 @@ export function useWordPressProjects(limit?: number): UseWordPressProjectsResult
       thumbnail: wp.thumbnail,
       images: wp.images,
       details: wp.details,
+      midia: wp.midia,
     }));
   }
 
