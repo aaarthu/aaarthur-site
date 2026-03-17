@@ -6,7 +6,7 @@ import { componentTagger } from "lovable-tagger";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   // ✅ Importante para rodar dentro do WordPress
-  base: "./",
+  base: "/",
 
   server: {
     host: "::",
