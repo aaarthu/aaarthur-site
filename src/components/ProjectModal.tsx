@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight, ZoomIn, Play } from "lucide-react";
 import { Project } from "@/data/projects";
+import { MidiaItem } from "@/services/wordpressApi";
 import { ImageLightbox } from "./ImageLightbox";
 import { useTranslation } from "react-i18next";
 
@@ -75,6 +76,77 @@ function toFullsizeUrl(url: string): string {
     return `${base}?fit=1920%2C1080&ssl=1&quality=90`;
   }
   return url;
+}
+
+// ─── Player Vimeo com loop ────────────────────────────────────
+function VimeoPlayer({ vimeoId }: { vimeoId: string }) {
+  return (
+    <div className="w-full rounded-2xl overflow-hidden border border-black/10 aspect-video bg-black">
+      <iframe
+        src={`https://player.vimeo.com/video/${vimeoId}?loop=1&autoplay=0&title=0&byline=0&portrait=0`}
+        className="w-full h-full"
+        frameBorder="0"
+        allow="autoplay; fullscreen; picture-in-picture"
+        allowFullScreen
+      />
+    </div>
+  );
+}
+
+// ─── Lista intercalada de imagens e vídeos Vimeo ─────────────
+function MidiaList({
+  midia,
+  projectTitle,
+  onImageClick,
+}: {
+  midia: MidiaItem[];
+  projectTitle: string;
+  onImageClick: (imageIndex: number) => void;
+}) {
+  let imageCount = 0;
+  return (
+    <div className="mt-10 space-y-5">
+      {midia.map((item, idx) => {
+        if (item.tipo === "vimeo") {
+          return (
+            <motion.div
+              key={`vimeo-${item.vimeo_id}-${idx}`}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: idx * 0.04 }}
+            >
+              <VimeoPlayer vimeoId={item.vimeo_id} />
+            </motion.div>
+          );
+        }
+        const currentImageIndex = imageCount++;
+        return (
+          <motion.button
+            key={`img-${item.url}-${idx}`}
+            onClick={() => onImageClick(currentImageIndex)}
+            className="w-full rounded-2xl overflow-hidden bg-black/[0.03] border border-black/10 hover:border-black/20 transition-colors"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, delay: idx * 0.04 }}
+          >
+            <div className="relative aspect-[16/9] group">
+              <img
+                src={item.url}
+                alt={`${projectTitle} - ${idx + 1}`}
+                loading={idx === 0 ? "eager" : "lazy"}
+                className="absolute inset-0 w-full h-full object-contain"
+              />
+              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-white/20 border border-white/60 flex items-center justify-center">
+                  <ZoomIn className="w-4 h-4 text-white" />
+                </div>
+              </div>
+            </div>
+          </motion.button>
+        );
+      })}
+    </div>
+  );
 }
 
 // ─── Grade de miniaturas + lightbox ──────────────────────────
@@ -272,6 +344,14 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
 
   const allImages = useMemo(() => {
     if (!project) return [];
+    // Se tem repeater, usa só as imagens dele para o lightbox
+    if (project.midia && project.midia.length > 0) {
+      return project.midia
+        .filter((m): m is Extract<MidiaItem, { tipo: "imagem" }> => m.tipo === "imagem")
+        .map((m) => m.url)
+        .filter(isValidImageUrl);
+    }
+    // Fallback legado
     const imgs = [project.thumbnail, ...(project.images || [])].filter(Boolean).filter(isValidImageUrl);
     return Array.from(new Set(imgs));
   }, [project]);
@@ -280,6 +360,7 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
 
   const displayDescription = isEn ? (project.description_en || project.description) : (project.description_pt || project.description);
   const displayCategory = isEn ? (project.category_en || project.category) : (project.category_pt || project.category);
+  const hasMidiaRepeater = project.midia && project.midia.length > 0;
 
   return (
     <AnimatePresence>
@@ -331,8 +412,20 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
                     )}
 
                     {isSlideGalleryMode ? (
+                      // Modo grade de slides (comportamento original)
                       <SlideGrid images={allImages} />
+                    ) : hasMidiaRepeater ? (
+                      // Novo modo: lista intercalada de imagens e vídeos Vimeo
+                      <MidiaList
+                        midia={project.midia!}
+                        projectTitle={project.title}
+                        onImageClick={(imageIndex) => {
+                          setSelectedImageIndex(imageIndex);
+                          setLightboxOpen(true);
+                        }}
+                      />
                     ) : (
+                      // Fallback legado: apenas imagens do Gutenberg
                       <div className="mt-10 space-y-5">
                         {allImages.length === 0 ? (
                           <div className="rounded-2xl border border-black/10 bg-black/[0.03] p-6">{t("modal.noImages")}</div>
