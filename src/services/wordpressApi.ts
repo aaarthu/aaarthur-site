@@ -18,6 +18,11 @@ export interface WordPressProject {
   };
 }
 
+// ─── Item de mídia ordenado (imagem ou vídeo Vimeo) ──────────
+export type MidiaItem =
+  | { tipo: "imagem"; url: string }
+  | { tipo: "vimeo"; vimeo_id: string };
+
 export interface TransformedProject {
   id: string;
   wordpressId: number;
@@ -30,7 +35,8 @@ export interface TransformedProject {
   description_pt: string;
   description_en: string;
   thumbnail: string;
-  images: string[]; // inclui URLs de vídeo (.mp4 etc.) para projetos de slides
+  images: string[]; // apenas imagens, para o ImageLightbox
+  midia: MidiaItem[]; // lista ordenada com imagens e vídeos intercalados
   details?: {
     year?: string;
     client?: string;
@@ -72,103 +78,80 @@ function bestUrlFromSrcSet(srcset: string | null): string {
   return entries[0]?.url || "";
 }
 
-// ── Remove sufixo de tamanho da URL (ex: -1024x768) para obter original ──
 function toOriginalSize(url: string): string {
-  // Remove parâmetros do Jetpack CDN: ?fit=960%2C540&ssl=1 → URL limpa
   let clean = url.split("?")[0];
-  // Remove sufixo de tamanho: imagem-1024x768.jpg → imagem.jpg
   clean = clean.replace(/-\d+x\d+(\.\w+)$/, "$1");
   return clean;
 }
 
-// ── Melhor URL de imagem: prioriza original/full, remove resize ──
 function bestImageUrl(img: Element): string {
   const candidates = [
-    img.getAttribute("data-orig-file"),         // Jetpack: URL original
-    img.getAttribute("data-large-file"),         // Jetpack: large
-    img.getAttribute("data-full-url"),           // alguns temas
+    img.getAttribute("data-orig-file"),
+    img.getAttribute("data-large-file"),
+    img.getAttribute("data-full-url"),
   ].filter(isValidUrl) as string[];
 
   if (candidates.length) return candidates[0];
 
-  // Tenta pegar a maior do srcset
   const srcset = img.getAttribute("srcset") || img.getAttribute("data-srcset") || "";
   if (srcset) {
     const best = bestUrlFromSrcSet(srcset);
     if (isValidUrl(best)) return toOriginalSize(best);
   }
 
-  // Fallback: src normal, remove sufixo de tamanho
   const src = img.getAttribute("data-src") || img.getAttribute("src") || "";
   return isValidUrl(src) ? toOriginalSize(src) : "";
 }
 
-// ── Extrai imagens E vídeos do conteúdo HTML ─────────────────
-function extractMediaFromContent(html: string = ""): string[] {
+// ── Extrai mídia do HTML do Gutenberg preservando a ordem ────
+// Percorre os blocos em sequência para manter intercalagem
+// entre imagens e embeds do Vimeo exatamente como no editor.
+function extractMediaFromContent(html: string = ""): MidiaItem[] {
   if (!html) return [];
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, "text/html");
 
-  const urls: string[] = [];
-
-  // ── Imagens (bloco Image e bloco Gallery do Gutenberg) ──
-  Array.from(doc.querySelectorAll("img")).forEach((img) => {
-    const url = bestImageUrl(img);
-    if (url) urls.push(url);
-  });
-
-  // ── Vídeos: bloco wp-block-video do Gutenberg ──
-  Array.from(doc.querySelectorAll(".wp-block-video video, figure.wp-block-video video")).forEach((v) => {
-    const src = v.getAttribute("src") || "";
-    if (isValidUrl(src)) urls.push(src);
-    v.querySelectorAll("source").forEach((source) => {
-      const s = source.getAttribute("src") || "";
-      if (isValidUrl(s)) urls.push(s);
-    });
-  });
-
-  // ── Vídeos: tag <video> genérica ──
-  Array.from(doc.querySelectorAll("video")).forEach((video) => {
-    const src = video.getAttribute("src") || "";
-    if (isValidUrl(src)) urls.push(src);
-    video.querySelectorAll("source").forEach((source) => {
-      const s = source.getAttribute("src") || "";
-      if (isValidUrl(s)) urls.push(s);
-    });
-  });
-
-  // ── VideoPress: decodifica &amp; e varre o HTML bruto ──
-  // O WordPress salva a URL como texto dentro de .wp-block-embed__wrapper
-  // Ex: "https://videopress.com/v/SVa110Vu?resizeToParent=true&amp;cover=true"
-  const htmlDecoded = html.replace(/&amp;/g, "&").replace(/&#038;/g, "&");
+  const items: MidiaItem[] = [];
   const seen = new Set<string>();
-  for (const source of [html, htmlDecoded]) {
-    const vpMatches = source.matchAll(/https?:\/\/videopress\.com\/v\/([a-zA-Z0-9]+)/g);
-    for (const m of vpMatches) {
-      const vpUrl = `https://videopress.com/v/${m[1]}`;
-      if (!seen.has(vpUrl)) { seen.add(vpUrl); urls.push(vpUrl); }
+
+  for (const block of Array.from(doc.body.children)) {
+    // ── Bloco Vimeo embed do Gutenberg ──────────────────────
+    // <figure class="wp-block-embed is-type-video is-provider-vimeo">
+    //   <div class="wp-block-embed__wrapper">
+    //     https://vimeo.com/812345678
+    //   </div>
+    // </figure>
+    const isEmbed = block.classList.contains("wp-block-embed");
+    const wrapperText =
+      block.querySelector(".wp-block-embed__wrapper")?.textContent || "";
+    const isVimeo =
+      block.classList.contains("is-provider-vimeo") ||
+      wrapperText.includes("vimeo.com");
+
+    if (isEmbed && isVimeo) {
+      const match = wrapperText.trim().match(/vimeo\.com\/(?:video\/)?(\d+)/);
+      if (match) {
+        const vimeo_id = match[1];
+        const key = `vimeo:${vimeo_id}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          items.push({ tipo: "vimeo", vimeo_id });
+        }
+      }
+      continue;
+    }
+
+    // ── Imagens dentro de qualquer outro bloco ───────────────
+    for (const img of Array.from(block.querySelectorAll("img"))) {
+      const url = bestImageUrl(img);
+      if (url && !seen.has(url)) {
+        seen.add(url);
+        items.push({ tipo: "imagem", url });
+      }
     }
   }
 
-  // ── VideoPress via textContent dos wrappers ──
-  Array.from(doc.querySelectorAll(".wp-block-embed__wrapper, .wp-block-embed")).forEach((wrapper) => {
-    const text = (wrapper.textContent || "").trim();
-    const match = text.match(/https?:\/\/videopress\.com\/v\/([a-zA-Z0-9]+)/);
-    if (match) {
-      const vpUrl = `https://videopress.com/v/${match[1]}`;
-      if (!seen.has(vpUrl)) { seen.add(vpUrl); urls.push(vpUrl); }
-    }
-  });
-
-  // ── Vídeos: links diretos para arquivo de vídeo ──
-  Array.from(doc.querySelectorAll("a[href]")).forEach((a) => {
-    const href = a.getAttribute("href") || "";
-    if (isValidUrl(href) && /\.(mp4|webm|ogg|mov)(\?|$)/i.test(href)) {
-      urls.push(href);
-    }
-  });
-
-  return Array.from(new Set(urls.filter(Boolean)));
+  return items;
 }
 
 function featuredFromEmbedded(wp: WordPressProject): string {
@@ -185,27 +168,7 @@ function featuredFromEmbedded(wp: WordPressProject): string {
 function getCustomField(wp: WordPressProject, fieldName: string): string {
   const root = (wp as any)[fieldName];
   if (root) return root;
-  return (
-    wp.meta?.[fieldName] ||
-    wp.acf?.[fieldName] ||
-    ""
-  );
-}
-
-// Busca URL do vídeo VideoPress via API de mídia do WordPress
-async function fetchVideoPressUrl(guid: string): Promise<string> {
-  try {
-    const res = await fetch(
-      `${WORDPRESS_URL}/wp-json/wp/v2/media?search=${guid}&per_page=5`,
-      { headers: { "Content-Type": "application/json" } }
-    );
-    if (!res.ok) return "";
-    const data = await res.json();
-    const item = data?.[0];
-    return item?.source_url || item?.guid?.rendered || "";
-  } catch {
-    return "";
-  }
+  return wp.meta?.[fieldName] || wp.acf?.[fieldName] || "";
 }
 
 export async function fetchWordPressProjects(): Promise<TransformedProject[]> {
@@ -224,10 +187,10 @@ export async function fetchWordPressProjects(): Promise<TransformedProject[]> {
   if (first) {
     console.log("WP CHECK:", {
       id: first.id,
-      meta: first.meta,
       acf: first.acf,
       category_pt: getCustomField(first, "category_pt"),
       category_en: getCustomField(first, "category_en"),
+      content_preview: first.content?.rendered?.slice(0, 300),
     });
   }
 
@@ -268,43 +231,34 @@ export async function fetchWordPressProjectBySlug(
 function transformProject(wp: WordPressProject): TransformedProject {
   const featured = featuredFromEmbedded(wp);
   const contentHtml = wp.content?.rendered || "";
-  const contentMedia = extractMediaFromContent(contentHtml);
-  console.log("MEDIA EXTRAÍDA:", contentMedia);
+
+  // Lista ordenada de mídia (imagens + vídeos Vimeo intercalados)
+  const midia = extractMediaFromContent(contentHtml);
+  console.log("MIDIA EXTRAÍDA:", midia);
+
+  // Só as imagens, para o ImageLightbox
+  const images = midia
+    .filter((m): m is Extract<MidiaItem, { tipo: "imagem" }> => m.tipo === "imagem")
+    .map((m) => m.url);
+
+  const thumbnail = featured || images[0] || "";
 
   const category_pt =
     getCustomField(wp, "category_pt") ||
     wp._embedded?.["wp:term"]?.[0]?.[0]?.name ||
     "Projeto";
 
-  const category_en =
-    getCustomField(wp, "category_en") ||
-    category_pt;
+  const category_en = getCustomField(wp, "category_en") || category_pt;
 
   const description_pt =
     getCustomField(wp, "description_pt") ||
     stripHtml(wp.excerpt?.rendered || "") ||
     stripHtml(contentHtml).slice(0, 800);
 
-  const description_en =
-    getCustomField(wp, "description_en") ||
-    description_pt;
+  const description_en = getCustomField(wp, "description_en") || description_pt;
 
   const description =
     stripHtml(wp.excerpt?.rendered || "") || stripHtml(contentHtml).slice(0, 220);
-
-  // Adiciona vídeos dos campos ACF video_1 e video_2 ao final do array
-  const acfVideos = [
-    getCustomField(wp, "video_1"),
-    getCustomField(wp, "video_2"),
-    getCustomField(wp, "video_3"),
-  ].filter(Boolean).filter(isValidUrl);
-
-  const allMedia = [...contentMedia, ...acfVideos];
-  // Remove duplicatas mantendo ordem
-  const uniqueMedia = Array.from(new Set(allMedia));
-
-  const thumbnail = featured || uniqueMedia.find(u => !u.match(/\.(mp4|webm|ogg|mov)(\?|$)/i)) || uniqueMedia[0] || "";
-  const images = uniqueMedia.length ? uniqueMedia : [thumbnail].filter(Boolean);
 
   return {
     id: `wp-${wp.id}`,
@@ -319,6 +273,7 @@ function transformProject(wp: WordPressProject): TransformedProject {
     description_en,
     thumbnail,
     images,
+    midia,
     details: undefined,
   };
 }
