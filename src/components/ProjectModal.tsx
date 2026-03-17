@@ -83,7 +83,7 @@ function VimeoPlayer({ vimeoId }: { vimeoId: string }) {
   return (
     <div className="w-full rounded-2xl overflow-hidden border border-black/10 aspect-video bg-black">
       <iframe
-        src={`https://player.vimeo.com/video/${vimeoId}?loop=1&autoplay=0&title=0&byline=0&portrait=0`}
+        src={`https://player.vimeo.com/video/${vimeoId}?loop=1&autoplay=1&muted=1&background=1&title=0&byline=0&portrait=0`}
         className="w-full h-full"
         frameBorder="0"
         allow="autoplay; fullscreen; picture-in-picture"
