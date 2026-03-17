@@ -52,15 +52,11 @@ function videoPressThumbnail(url: string): string {
   return `https://videos.files.wordpress.com/${match[1]}/poster.jpg`;
 }
 
-// Gera URL de miniatura via Jetpack CDN (para cards da grade)
 function toThumbnailUrl(url: string, width = 600, height = 338): string {
-  // Já é uma URL do Jetpack CDN (i0.wp.com)?
   if (url.includes("i0.wp.com") || url.includes(".wp.com/")) {
-    // Substitui ou adiciona parâmetros de tamanho
     const base = url.split("?")[0];
     return `${base}?fit=${width}%2C${height}&ssl=1&quality=75`;
   }
-  // URL direta do WordPress — tenta construir via Jetpack CDN
   if (url.includes("wp-content/uploads")) {
     const domain = url.match(/https?:\/\/([^/]+)/)?.[1] || "";
     const path = url.replace(/https?:\/\/[^/]+/, "");
@@ -69,7 +65,6 @@ function toThumbnailUrl(url: string, width = 600, height = 338): string {
   return url;
 }
 
-// Gera URL fullsize via Jetpack CDN (para lightbox)
 function toFullsizeUrl(url: string): string {
   if (url.includes("i0.wp.com") || url.includes(".wp.com/")) {
     const base = url.split("?")[0];
@@ -78,12 +73,12 @@ function toFullsizeUrl(url: string): string {
   return url;
 }
 
-// ─── Player Vimeo com loop ────────────────────────────────────
+// ─── Player Vimeo (iframe) ────────────────────────────────────
 function VimeoPlayer({ vimeoId }: { vimeoId: string }) {
   return (
     <div className="w-full rounded-2xl overflow-hidden border border-black/10 aspect-video bg-black">
       <iframe
-        src={`https://player.vimeo.com/video/${vimeoId}?loop=1&autoplay=1&muted=1&background=1&title=0&byline=0&portrait=0`}
+        src={`https://player.vimeo.com/video/${vimeoId}?loop=1&autoplay=1&muted=1&title=0&byline=0&portrait=0`}
         className="w-full h-full"
         frameBorder="0"
         allow="autoplay; fullscreen; picture-in-picture"
@@ -93,7 +88,23 @@ function VimeoPlayer({ vimeoId }: { vimeoId: string }) {
   );
 }
 
-// ─── Lista intercalada de imagens e vídeos Vimeo ─────────────
+// ─── Player de vídeo MP4 hospedado (autoplay + loop) ─────────
+function VideoPlayer({ url }: { url: string }) {
+  return (
+    <div className="w-full rounded-2xl overflow-hidden border border-black/10 aspect-video bg-black">
+      <video
+        src={url}
+        className="w-full h-full object-cover"
+        autoPlay
+        loop
+        muted
+        playsInline
+      />
+    </div>
+  );
+}
+
+// ─── Lista intercalada de imagens e vídeos ────────────────────
 function MidiaList({
   midia,
   projectTitle,
@@ -107,6 +118,7 @@ function MidiaList({
   return (
     <div className="mt-10 space-y-5">
       {midia.map((item, idx) => {
+        // Vídeo Vimeo
         if (item.tipo === "vimeo") {
           return (
             <motion.div
@@ -119,6 +131,22 @@ function MidiaList({
             </motion.div>
           );
         }
+
+        // Vídeo MP4 hospedado no WordPress
+        if (item.tipo === "imagem" && /\.(mp4|webm|ogg|mov)(\?|$)/i.test(item.url)) {
+          return (
+            <motion.div
+              key={`video-${item.url}-${idx}`}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: idx * 0.04 }}
+            >
+              <VideoPlayer url={item.url} />
+            </motion.div>
+          );
+        }
+
+        // Imagem clicável
         const currentImageIndex = imageCount++;
         return (
           <motion.button
@@ -149,7 +177,7 @@ function MidiaList({
   );
 }
 
-// ─── Grade de miniaturas + lightbox ──────────────────────────
+// ─── Grade de miniaturas + lightbox (modo slides) ─────────────
 function SlideGrid({ images }: { images: string[] }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [current, setCurrent] = useState(0);
@@ -175,12 +203,10 @@ function SlideGrid({ images }: { images: string[] }) {
 
   return (
     <>
-      {/* ── Grade ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-10">
         {images.map((img, idx) => {
           const video = isVideoUrl(img);
           const vpThumb = isVideoPressUrl(img) ? videoPressThumbnail(img) : "";
-          // Usa miniatura pequena no card, fullsize só no lightbox
           const cardSrc = video ? vpThumb : toThumbnailUrl(img);
 
           return (
@@ -193,7 +219,6 @@ function SlideGrid({ images }: { images: string[] }) {
               className="group relative aspect-video rounded-xl overflow-hidden bg-black/5 border border-black/8 hover:border-black/20 transition-all focus:outline-none"
             >
               {video && !vpThumb ? (
-                // MP4 direto: usa <video> para capturar primeiro frame
                 <video
                   src={`${img}#t=0.5`}
                   preload="metadata"
@@ -231,7 +256,6 @@ function SlideGrid({ images }: { images: string[] }) {
         })}
       </div>
 
-      {/* ── Lightbox ── */}
       <AnimatePresence>
         {lightboxOpen && (
           <motion.div
@@ -240,69 +264,47 @@ function SlideGrid({ images }: { images: string[] }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={() => setLightboxOpen(false)} />
+            <div className="absolute inset-0 bg-black/90" onClick={() => setLightboxOpen(false)} />
+            <button onClick={() => setLightboxOpen(false)} className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors">
+              <X className="w-5 h-5 text-white" />
+            </button>
 
-            <div className="relative z-10 w-full h-full flex flex-col items-center justify-center px-16 py-20">
+            <motion.div
+              className="relative z-10 w-full max-w-5xl mx-4 aspect-video"
+              initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+            >
+              {isCurrentVideoPress ? (
+                <iframe
+                  src={toVideoPressEmbed(currentUrl)}
+                  width="100%"
+                  height="100%"
+                  frameBorder="0"
+                  allowFullScreen
+                  allow="autoplay; fullscreen"
+                  className="w-full h-full"
+                />
+              ) : isCurrentVideo ? (
+                <video src={currentUrl} controls autoPlay className="w-full h-full object-contain bg-black" />
+              ) : (
+                <img src={toFullsizeUrl(currentUrl)} alt={`Slide ${current + 1}`} className="w-full h-full object-contain bg-black" />
+              )}
+            </motion.div>
 
-              {/* Fechar */}
-              <button
-                onClick={() => setLightboxOpen(false)}
-                className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors"
-              >
-                <X className="w-5 h-5 text-white" />
-              </button>
+            <button onClick={(e) => { e.stopPropagation(); prev(); }} className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors">
+              <ChevronLeft className="w-6 h-6 text-white" />
+            </button>
+            <button onClick={(e) => { e.stopPropagation(); next(); }} className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors">
+              <ChevronRight className="w-6 h-6 text-white" />
+            </button>
 
-              {/* Contador */}
-              <div className="absolute top-6 left-1/2 -translate-x-1/2 font-dmsans text-[11px] tracking-widest uppercase text-white/50 flex items-center gap-2">
-                {current + 1} / {images.length}
-                {isCurrentVideo && (
-                  <span className="bg-white/20 text-white/80 text-[9px] px-2 py-0.5 rounded tracking-widest">VÍDEO</span>
-                )}
-              </div>
-
-              {/* Mídia em tamanho máximo */}
-              <motion.div
-                key={current}
-                initial={{ opacity: 0, scale: 0.97 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.18 }}
-                className="w-full max-w-6xl rounded-2xl overflow-hidden bg-black shadow-2xl aspect-video"
-              >
-                {isCurrentVideoPress ? (
-                  <iframe
-                    src={toVideoPressEmbed(currentUrl)}
-                    width="100%"
-                    height="100%"
-                    frameBorder="0"
-                    allowFullScreen
-                    allow="autoplay; fullscreen"
-                    className="w-full h-full"
-                  />
-                ) : isCurrentVideo ? (
-                  <video src={currentUrl} controls autoPlay className="w-full h-full object-contain bg-black" />
-                ) : (
-                  <img src={toFullsizeUrl(currentUrl)} alt={`Slide ${current + 1}`} className="w-full h-full object-contain bg-black" />
-                )}
-              </motion.div>
-
-              {/* Setas */}
-              <button onClick={(e) => { e.stopPropagation(); prev(); }} className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors">
-                <ChevronLeft className="w-6 h-6 text-white" />
-              </button>
-              <button onClick={(e) => { e.stopPropagation(); next(); }} className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors">
-                <ChevronRight className="w-6 h-6 text-white" />
-              </button>
-
-              {/* Dots */}
-              <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-1.5 flex-wrap justify-center max-w-sm">
-                {images.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={(e) => { e.stopPropagation(); setCurrent(i); }}
-                    className={`transition-all duration-200 rounded-full ${i === current ? "w-5 h-1.5 bg-white" : "w-1.5 h-1.5 bg-white/30 hover:bg-white/60"}`}
-                  />
-                ))}
-              </div>
+            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-1.5 flex-wrap justify-center max-w-sm">
+              {images.map((img, i) => (
+                <button
+                  key={i}
+                  onClick={(e) => { e.stopPropagation(); setCurrent(i); }}
+                  className={`transition-all duration-200 rounded-full ${i === current ? "w-5 h-1.5 bg-white" : "w-1.5 h-1.5 bg-white/30 hover:bg-white/60"}`}
+                />
+              ))}
             </div>
           </motion.div>
         )}
@@ -344,14 +346,13 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
 
   const allImages = useMemo(() => {
     if (!project) return [];
-    // Se tem repeater, usa só as imagens dele para o lightbox
     if (project.midia && project.midia.length > 0) {
       return project.midia
         .filter((m): m is Extract<MidiaItem, { tipo: "imagem" }> => m.tipo === "imagem")
+        .filter((m) => !/\.(mp4|webm|ogg|mov)(\?|$)/i.test(m.url))
         .map((m) => m.url)
         .filter(isValidImageUrl);
     }
-    // Fallback legado
     const imgs = [project.thumbnail, ...(project.images || [])].filter(Boolean).filter(isValidImageUrl);
     return Array.from(new Set(imgs));
   }, [project]);
@@ -412,10 +413,8 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
                     )}
 
                     {isSlideGalleryMode ? (
-                      // Modo grade de slides (comportamento original)
                       <SlideGrid images={allImages} />
                     ) : hasMidiaRepeater ? (
-                      // Novo modo: lista intercalada de imagens e vídeos Vimeo
                       <MidiaList
                         midia={project.midia!}
                         projectTitle={project.title}
@@ -425,7 +424,6 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
                         }}
                       />
                     ) : (
-                      // Fallback legado: apenas imagens do Gutenberg
                       <div className="mt-10 space-y-5">
                         {allImages.length === 0 ? (
                           <div className="rounded-2xl border border-black/10 bg-black/[0.03] p-6">{t("modal.noImages")}</div>
