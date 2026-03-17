@@ -22,26 +22,25 @@ const Projects = () => {
   const { projects, isLoading, isError, isUsingFallback } = useWordPressProjects();
 
   // ✅ 1) Se a URL tiver slug, abre o projeto automaticamente
-  useEffect(() => {
-    if (isLoading) return;
+ seEffect(() => {
+  if (isLoading) return;
+  if (!projects.length) return; // ← linha nova
 
-    if (!slug) {
-      // URL sem slug -> modal fechado
-      setIsModalOpen(false);
-      setSelectedProject(null);
-      return;
-    }
+  if (!slug) {
+    setIsModalOpen(false);
+    setSelectedProject(null);
+    return;
+  }
 
-    const found = projects.find((p) => p.slug === slug);
+  const found = projects.find((p) => p.slug === slug);
 
-    if (found) {
-      setSelectedProject(found);
-      setIsModalOpen(true);
-    } else {
-      // slug inválido -> volta pra lista
-      navigate("/projects", { replace: true });
-    }
-  }, [slug, isLoading, projects, navigate]);
+  if (found) {
+    setSelectedProject(found);
+    setIsModalOpen(true);
+  } else {
+    navigate("/projects", { replace: true });
+  }
+}, [slug, isLoading, projects, navigate]);
 
   const handleProjectClick = (project: Project) => {
     console.log("CLICK CARD:", project.title);
