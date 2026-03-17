@@ -18,10 +18,11 @@ export interface WordPressProject {
   };
 }
 
-// ─── Item de mídia ordenado (imagem ou vídeo Vimeo) ──────────
+// ─── Item de mídia ordenado ───────────────────────────────────
 export type MidiaItem =
   | { tipo: "imagem"; url: string }
-  | { tipo: "vimeo"; vimeo_id: string };
+  | { tipo: "vimeo"; vimeo_id: string }
+  | { tipo: "videopress"; embed_url: string };
 
 export interface TransformedProject {
   id: string;
@@ -35,8 +36,8 @@ export interface TransformedProject {
   description_pt: string;
   description_en: string;
   thumbnail: string;
-  images: string[]; // apenas imagens, para o ImageLightbox
-  midia: MidiaItem[]; // lista ordenada com imagens e vídeos intercalados
+  images: string[];
+  midia: MidiaItem[];
   details?: {
     year?: string;
     client?: string;
@@ -104,9 +105,7 @@ function bestImageUrl(img: Element): string {
 }
 
 // ── Extrai mídia do HTML do Gutenberg preservando a ordem ────
-// Suporta dois formatos de embed do Vimeo:
-// 1. WordPress.com: já renderiza <iframe src="https://player.vimeo.com/video/ID">
-// 2. WordPress.org: deixa a URL como texto https://vimeo.com/ID
+// Suporta: Vimeo embed, VideoPress (WordPress.com), imagens
 function extractMediaFromContent(html: string = ""): MidiaItem[] {
   if (!html) return [];
   const parser = new DOMParser();
@@ -117,21 +116,41 @@ function extractMediaFromContent(html: string = ""): MidiaItem[] {
 
   for (const block of Array.from(doc.body.children)) {
     const isEmbed = block.classList.contains("wp-block-embed");
-    const isVimeoClass = block.classList.contains("is-provider-vimeo");
     const wrapper = block.querySelector(".wp-block-embed__wrapper");
+    const iframeSrc = wrapper?.querySelector("iframe")?.getAttribute("src") || "";
     const wrapperText = wrapper?.textContent || "";
-    const isVimeoText = wrapperText.includes("vimeo.com");
-    const isVimeoIframe =
-      wrapper?.querySelector("iframe")?.getAttribute("src")?.includes("vimeo.com") || false;
 
-    if (isEmbed && (isVimeoClass || isVimeoText || isVimeoIframe)) {
-      // Formato WordPress.com: <iframe src="https://player.vimeo.com/video/ID?...">
-      const iframeSrc = wrapper?.querySelector("iframe")?.getAttribute("src") || "";
+    // ── VideoPress (WordPress.com converte uploads para VideoPress) ──
+    // <figure class="wp-block-embed is-provider-videopress">
+    //   <div class="wp-block-embed__wrapper">
+    //     <iframe src="https://videopress.com/embed/GUID?...">
+    const isVideoPress =
+      block.classList.contains("is-provider-videopress") ||
+      iframeSrc.includes("videopress.com/embed/");
+
+    if (isEmbed && isVideoPress) {
+      // Pega a URL do iframe e limpa parâmetros para ter a URL base de embed
+      const vpMatch = iframeSrc.match(/videopress\.com\/embed\/([a-zA-Z0-9]+)/);
+      if (vpMatch) {
+        const embed_url = `https://videopress.com/embed/${vpMatch[1]}?autoplay=1&loop=1&muted=1&cover=1`;
+        const key = `vp:${vpMatch[1]}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          items.push({ tipo: "videopress", embed_url });
+        }
+      }
+      continue;
+    }
+
+    // ── Vimeo embed ──────────────────────────────────────────
+    const isVimeo =
+      block.classList.contains("is-provider-vimeo") ||
+      wrapperText.includes("vimeo.com") ||
+      iframeSrc.includes("vimeo.com");
+
+    if (isEmbed && isVimeo) {
       const iframeMatch = iframeSrc.match(/player\.vimeo\.com\/video\/(\d+)/);
-
-      // Formato WordPress.org: texto "https://vimeo.com/ID" dentro do wrapper
       const textMatch = wrapperText.trim().match(/vimeo\.com\/(?:video\/)?(\d+)/);
-
       const vimeo_id = iframeMatch?.[1] || textMatch?.[1] || "";
 
       if (vimeo_id) {
@@ -191,8 +210,6 @@ export async function fetchWordPressProjects(): Promise<TransformedProject[]> {
     console.log("WP CHECK:", {
       id: first.id,
       acf: first.acf,
-      category_pt: getCustomField(first, "category_pt"),
-      category_en: getCustomField(first, "category_en"),
       content_preview: first.content?.rendered?.slice(0, 500),
     });
   }
