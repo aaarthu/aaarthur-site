@@ -104,8 +104,9 @@ function bestImageUrl(img: Element): string {
 }
 
 // ── Extrai mídia do HTML do Gutenberg preservando a ordem ────
-// Percorre os blocos em sequência para manter intercalagem
-// entre imagens e embeds do Vimeo exatamente como no editor.
+// Suporta dois formatos de embed do Vimeo:
+// 1. WordPress.com: já renderiza <iframe src="https://player.vimeo.com/video/ID">
+// 2. WordPress.org: deixa a URL como texto https://vimeo.com/ID
 function extractMediaFromContent(html: string = ""): MidiaItem[] {
   if (!html) return [];
   const parser = new DOMParser();
@@ -115,23 +116,25 @@ function extractMediaFromContent(html: string = ""): MidiaItem[] {
   const seen = new Set<string>();
 
   for (const block of Array.from(doc.body.children)) {
-    // ── Bloco Vimeo embed do Gutenberg ──────────────────────
-    // <figure class="wp-block-embed is-type-video is-provider-vimeo">
-    //   <div class="wp-block-embed__wrapper">
-    //     https://vimeo.com/812345678
-    //   </div>
-    // </figure>
     const isEmbed = block.classList.contains("wp-block-embed");
-    const wrapperText =
-      block.querySelector(".wp-block-embed__wrapper")?.textContent || "";
-    const isVimeo =
-      block.classList.contains("is-provider-vimeo") ||
-      wrapperText.includes("vimeo.com");
+    const isVimeoClass = block.classList.contains("is-provider-vimeo");
+    const wrapper = block.querySelector(".wp-block-embed__wrapper");
+    const wrapperText = wrapper?.textContent || "";
+    const isVimeoText = wrapperText.includes("vimeo.com");
+    const isVimeoIframe =
+      wrapper?.querySelector("iframe")?.getAttribute("src")?.includes("vimeo.com") || false;
 
-    if (isEmbed && isVimeo) {
-      const match = wrapperText.trim().match(/vimeo\.com\/(?:video\/)?(\d+)/);
-      if (match) {
-        const vimeo_id = match[1];
+    if (isEmbed && (isVimeoClass || isVimeoText || isVimeoIframe)) {
+      // Formato WordPress.com: <iframe src="https://player.vimeo.com/video/ID?...">
+      const iframeSrc = wrapper?.querySelector("iframe")?.getAttribute("src") || "";
+      const iframeMatch = iframeSrc.match(/player\.vimeo\.com\/video\/(\d+)/);
+
+      // Formato WordPress.org: texto "https://vimeo.com/ID" dentro do wrapper
+      const textMatch = wrapperText.trim().match(/vimeo\.com\/(?:video\/)?(\d+)/);
+
+      const vimeo_id = iframeMatch?.[1] || textMatch?.[1] || "";
+
+      if (vimeo_id) {
         const key = `vimeo:${vimeo_id}`;
         if (!seen.has(key)) {
           seen.add(key);
@@ -190,7 +193,7 @@ export async function fetchWordPressProjects(): Promise<TransformedProject[]> {
       acf: first.acf,
       category_pt: getCustomField(first, "category_pt"),
       category_en: getCustomField(first, "category_en"),
-      content_preview: first.content?.rendered?.slice(0, 300),
+      content_preview: first.content?.rendered?.slice(0, 500),
     });
   }
 
@@ -232,11 +235,9 @@ function transformProject(wp: WordPressProject): TransformedProject {
   const featured = featuredFromEmbedded(wp);
   const contentHtml = wp.content?.rendered || "";
 
-  // Lista ordenada de mídia (imagens + vídeos Vimeo intercalados)
   const midia = extractMediaFromContent(contentHtml);
   console.log("MIDIA EXTRAÍDA:", midia);
 
-  // Só as imagens, para o ImageLightbox
   const images = midia
     .filter((m): m is Extract<MidiaItem, { tipo: "imagem" }> => m.tipo === "imagem")
     .map((m) => m.url);
