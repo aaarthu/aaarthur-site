@@ -1,3 +1,5 @@
+import { MidiaItem } from "@/services/wordpressApi";
+
 // Projetos de fallback — exibidos apenas se o WordPress estiver inacessível
 export interface Project {
   id: string;
@@ -11,6 +13,7 @@ export interface Project {
   description_en?: string;
   thumbnail: string;
   images: string[];
+  midia?: MidiaItem[];  // ← linha nova
   details?: {
     year?: string;
     client?: string;
@@ -18,7 +21,6 @@ export interface Project {
   };
   wordpressId?: number;
 }
-
 export const projects: Project[] = [
   {
     id: "placeholder",
