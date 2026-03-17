@@ -4,6 +4,20 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight, ZoomIn, Play } from "lucide-react";
 import { Project } from "@/data/projects";
 import { MidiaItem } from "@/services/wordpressApi";
+
+function VideoPressPlayer({ embedUrl }: { embedUrl: string }) {
+  return (
+    <div className="w-full rounded-2xl overflow-hidden border border-black/10 aspect-video bg-black">
+      <iframe
+        src={embedUrl}
+        className="w-full h-full"
+        frameBorder="0"
+        allow="autoplay; fullscreen; picture-in-picture"
+        allowFullScreen
+      />
+    </div>
+  );
+}
 import { ImageLightbox } from "./ImageLightbox";
 import { useTranslation } from "react-i18next";
 
@@ -118,6 +132,20 @@ function MidiaList({
   return (
     <div className="mt-10 space-y-5">
       {midia.map((item, idx) => {
+        // Vídeo VideoPress
+        if (item.tipo === "videopress") {
+          return (
+            <motion.div
+              key={`vp-${item.embed_url}-${idx}`}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: idx * 0.04 }}
+            >
+              <VideoPressPlayer embedUrl={item.embed_url} />
+            </motion.div>
+          );
+        }
+
         // Vídeo Vimeo
         if (item.tipo === "vimeo") {
           return (
